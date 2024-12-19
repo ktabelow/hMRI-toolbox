@@ -23,18 +23,24 @@ res_var = 0;
 num_echo=0;
 for ccon =1:numconn
     for te = data[ccon].TE
-        res_var = res_var + (data[cccon].te -  extrapolated{ccon}*exp(-R2s*te))^2;
+        res_var = res_var + (data[cccon].te -  extrapolated{ccon}.*exp(-R2s*te))^2;
     end
     num_echo = num_echo + length(data[ccon].TE);
 end
 res_var = res_var / (num_echo - numconn + 1);
-
-variance = res_var * inv(D'D);
+variance = ones([4 , 4, size(R2s)]);
+model_var = inv(D'D);
+for i =1:(numconn + 1)
+    for j= 1:(numconn +1)
+        variance(i, j, :, :,:) = res_var * model_var(i, j);
+    end
+end
 
 %call PAWS with data, residuals, params (include here?)
 
 ESTATICSmodel.extrapolated = extrapolated;
 ESTATICSmodel.R2s = R2s;
+ESTATICSmodel.variance = variance;
 ESTATICSmodel.nv = numconn + 1;
 ESTATICSmodel.necho = num_echo;
 mask = [];

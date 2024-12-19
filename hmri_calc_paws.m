@@ -46,15 +46,28 @@ lambda = ladjust * 2 * nv * qf(nv, ESTATICSmodel.necho - nv) * corr_fac_patchsiz
 if(verbose) cat("using lambda=", lambda, " patchsize=", patchsize,"\n")
 % end write to console
 
-    invCov <- extract(mpmESTATICSModel,"invCov")
-  if(mscbw>0){
+% extract array nv x nv x nvoxel
+invCov = ESTATICSmodel.variance
+
+% start smoothing the covariance martix to stabilise
+% we might skip this part because we use the linear model
+% if we use it this should to hmri_paws
+if(mscbw>0){
     rsdx <- extract(mpmESTATICSModel,"rsigma")^2
     rsdhat <- medianFilter3D(rsdx,mscbw,mask)
     rsdhat[!mask] <- mean(rsdhat[mask])
     invCov <- sweep(invCov,3:5,rsdx/rsdhat,"*")
   }
   dim(invCov) <- c(nv,nv,prod(sdim))
+
+  % projecting out the voxel within the mask only to save memory
+  % mask is TRUE/FALSE
+  invCov_d = invConv()
+  %Baris mask the R2s directly in hmri_paws.
   invCov <- invCov[,,mask]
+
+  
+  
   zobj <- vpawscov2(mpmESTATICSModel$modelCoeff,
                     kstar,
                     invCov,
