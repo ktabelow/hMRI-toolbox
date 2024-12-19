@@ -8,6 +8,8 @@ function [denoised_weighted_data] = hmri_paws(weighted_data, params)
 %%outputs:
 %denoised_weighted_data: adaptive denoised volumes
 
+%call hmri_coreg before denoising
+
 %call hmri_calc_R2s with 4 arguments (including design matrix D and SError)
 
 %from R2s and extrapolates calculate residuals and variance (using design
