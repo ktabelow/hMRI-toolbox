@@ -121,6 +121,7 @@ nvec = dy(1);
 n1 = dy(1);
 n2 = dy(2);
 n3 = dy(3);
+nvoxel = n1 * n2 * n3;
 nsample = size(data)(1); % this should be the total number of echos over all contrasts
 
 % the next switch can only be executed if nvec < 5, pls CHECK
@@ -143,11 +144,14 @@ invcov = invcov(indcov, :);
  
 % create index information for voxel in mask
 nvoxel; % we need the number of voxel within the mask here!
-position = zeros(dy); % this is an array of size dy
-  position[mask] <- 1:nvoxel
-  dim(mask) <- NULL
-  dim(modelCoeff) <- c(nvec,nvoxel)
-  hseq <- 1
+position = zeros(dy); % this is an array of size dy (spatial size of data)
+position[mask] <- 1:nvoxel 
+% position has the spatial dimensions of the data
+% it is first filled with zeros
+% all the voxels within the brain mask 
+% are assigned numbers 1, 2, 3, ... (number of voxel within the mask) 
+% in this order
+
   zobj <- list(bi = rep(1, nvoxel), theta = y)
   bi <- zobj$bi
   if(verbose) cat("Progress:")
@@ -164,8 +168,7 @@ position = zeros(dy); % this is an array of size dy
     hakt0 <- gethani(1, 1.25 * hmax, 2, 1.25 ^ (k - 1), wghts, 1e-4)
     hakt <- gethani(1, 1.25 * hmax, 2, 1.25 ^ k, wghts, 1e-4)
     if(verbose) cat("step", k, "hakt", hakt, "time", format(Sys.time()), "\n")
-    hseq <- c(hseq, hakt)
-    dlw <- (2 * trunc(hakt / c(1, wghts)) + 1)
+     dlw <- (2 * trunc(hakt / c(1, wghts)) + 1)
     if(k==kstar & !is.null(data)){#5
       dim(data) <- c(nsample,nvoxel)
       zobj <- .Fortran(C_pvawsme,
@@ -236,7 +239,6 @@ position = zeros(dy); % this is an array of size dy
     theta=zobj$theta,
     hakt=hakt,
     lambda=lambda,
-    hseq = hseq,
     bi = zobj$bi,
     data= if(!is.null(zobj$data)) zobj$data else NULL
   )
