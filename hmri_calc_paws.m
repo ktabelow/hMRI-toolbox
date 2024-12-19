@@ -2,7 +2,7 @@ function [] = hmri_calc_paws(ESTATICSmodel, mpmData, mask, kstar, patchsize, lad
 
 mscbw = 5;
 alpha = 0.025; % this is not needed, could be additional input to the qf() function if desired
-wghts = [];
+wghts = []; % this adjust for non-cubic voxel: if voxel size is 1.2 x 1.2 x 2.4mm wghts should be [1 1 2]
 
 sdim = size(ESTATICSmodel.R2s);
 
@@ -67,11 +67,13 @@ if(mscbw>0){
   invCov <- invCov[,,mask]
 
   
-  
-  zobj <- vpawscov2(mpmESTATICSModel$modelCoeff,
+  % we expect modelCoeff to be a nv x nvoxel_within_mask 
+  % we expect invCov to be nv x nv x nvoxel_within_mask
+  zobj <- vpawscov2(modelCoeff, % these are the extrapolates and the R2s
                     kstar,
                     invCov,
                     mask,
+                    ladjust = ladjust, 
                     lambda = lambda,
                     wghts = wghts,
                     patchsize = patchsize,
@@ -106,65 +108,45 @@ if(mscbw>0){
   ## END function smoothESTATICS()
 }
 
-vpawscov2 <- function(y,
-                      kstar = 16,
-                      invcov = NULL,
-                      mask = NULL,
-                      scorr = 0,
-                      spmin = 0.25,
-                      lambda = NULL,
-                      ladjust = 1,
-                      wghts = NULL,
-                      patchsize = 1,
-                      data = NULL,
-                      verbose = TRUE) {#1
-  ##
-  ##  this is the version with full size invcov (triangular storage)
-  ##  and optional smoothing of vector-valued images supplied in data
-  ##  for internal use in package qMRI
-  ##  Uses condensed data (voxel within mask only)
-  ##  returns a list
-  ##
-  dy <- dim(y)
-  nvec <- dy[1]
-  if(nvec>5) stop("limited to 5 parameters")
-  indcov <- switch(nvec,1,
-                   c(1,2,4),
-                   c(1,2,5,3,6,9),
-                   c(1,2,6,3,7,11,4,8,12,16),
-                   c(1,2,7,3,8,13,4,9,14,19,5,10,15,20,25))
-  if(!is.null(data)) nsample <- dim(data)[1]
-  dy <- dim(mask)
-  d <- length(dy)
-  if (d != 3)
-    stop("need 3D mask")
-  if(is.null(lambda)){#2
-    lambda <- 2 * ladjust * qchisq(pchisq(8.82, 1), nvec)
-    lambda <- lambda * switch(patchsize+1,1,1.3,1.6)
-  }#2
-  if (is.null(wghts)) wghts <- c(1, 1, 1)
-  wghts <- wghts[1] / wghts[2:3]
-  n1 <- dy[1]
-  n2 <- dy[2]
-  n3 <- dy[3]
-  h0 <- 0
-  if (any(scorr > 0)) {#3
-    h0 <- numeric(length(scorr))
-    for (i in 1:length(h0))
-      h0[i] <- geth.gauss(scorr[i])
-    if (length(h0) < d)
-      h0 <- rep(h0[1], d)
-    if(verbose) cat("Corresponding bandwiths for specified correlation:",
-                    h0,
-                    "\n")
-  }#3
-  ## create index information for voxel in mask
-  nvoxel <- sum(mask)
-  position <- array(0,dy)
+function outvar = vpawscov2(modelCoeff, kstar = 16, invcov = NULL, mask = NULL, lambda = NULL, ladjust = 1, wghts = NULL, patchsize = 1, data = NULL)
+ 
+spmin = 0.25, % FORTRAN needs this
+
+%  this is the version with full size invcov (triangular storage)
+%  and optional smoothing of vector-valued images supplied in data
+%  for internal use in package qMRI
+%  Uses condensed data (voxel within mask only)
+dy = size(modelCoeff);
+nvec = dy(1);
+n1 = dy(1);
+n2 = dy(2);
+n3 = dy(3);
+nsample = size(data)(1); % this should be the total number of echos over all contrasts
+
+% the next switch can only be executed if nvec < 5, pls CHECK
+% this has to be done in hmri_paws alreadz when the variance array is
+% created
+switch nvec
+    case 1
+        indcov = [1];
+    case 2
+        indcov = [1 2 4];
+    case 3
+        indcov = [1 2 6 3 7 11 4 8 12 16];
+    case 4
+        indcov = [1 2 7 3 8 13 4 9 14 19 5 10 15 20 25];
+end
+dim(invcov) = c(nvec * nvec, nvoxel)
+invcov = invcov(indcov, :);
+% end of " this has to de done in ..."
+ 
+ 
+% create index information for voxel in mask
+nvoxel; % we need the number of voxel within the mask here!
+position = zeros(dy); % this is an array of size dy
   position[mask] <- 1:nvoxel
   dim(mask) <- NULL
-  dim(y) <- c(nvec,nvoxel)
-  dim(invcov) <- c(nvec * nvec,nvoxel)
+  dim(modelCoeff) <- c(nvec,nvoxel)
   hseq <- 1
   zobj <- list(bi = rep(1, nvoxel), theta = y)
   bi <- zobj$bi
@@ -187,7 +169,7 @@ vpawscov2 <- function(y,
     if(k==kstar & !is.null(data)){#5
       dim(data) <- c(nsample,nvoxel)
       zobj <- .Fortran(C_pvawsme,
-                       as.double(y),
+                       as.double(modelCoeff),
                        as.double(data), ## data to smooth additionally
                        as.integer(position),
                        as.integer(nvec),
@@ -203,7 +185,7 @@ vpawscov2 <- function(y,
                        bi = double(nvoxel), #binn
                        theta = double(nvec * nvoxel),
                        data = double(nsample*nvoxel),
-                       as.double(invcov[indcov,]),#
+                       as.double(invcov),#
                        as.integer(mc.cores),
                        as.double(spmin),
                        double(prod(dlw)),
@@ -216,7 +198,7 @@ vpawscov2 <- function(y,
       dim(zobj$data) <- c(nsample, nvoxel)
     } else {#6
       zobj <- .Fortran(C_pvaws2,
-                       as.double(y),
+                       as.double(modelCoeff),
                        as.integer(position),
                        as.integer(nvec),
                        as.integer(nvec * (nvec + 1) / 2),
@@ -229,7 +211,7 @@ vpawscov2 <- function(y,
                        as.double(zobj$bi),
                        bi = double(nvoxel), #binn
                        theta = double(nvec * nvoxel),
-                       as.double(invcov[indcov,]),# compact storage
+                       as.double(invcov),# compact storage
                        as.integer(mc.cores),
                        as.double(spmin),
                        double(prod(dlw)),
@@ -240,8 +222,7 @@ vpawscov2 <- function(y,
                        as.integer(np3))[c("bi", "theta", "hakt")]
     }#6
     x <- 1.25 ^ k
-    scorrfactor <- x / (3 ^ d * prod(scorr) * prod(h0) + x)
-    lambda0 <- lambda * scorrfactor
+    lambda0 <- lambda
     if (verbose & max(total) > 0) {#7
       cat(signif(total[k], 2) * 100, "%  ", sep = "")
       cat("mean(bi)", signif(mean(zobj$bi),3)," ")

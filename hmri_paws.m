@@ -35,6 +35,8 @@ for i =1:(numconn + 1)
         variance(i, j, :, :,:) = res_var * model_var(i, j);
     end
 end
+% here comes the reduction to the voxel within the mask
+% here comes the reduction for the symmetric part
 
 %call PAWS with data, residuals, params (include here?)
 
