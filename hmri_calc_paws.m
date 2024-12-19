@@ -1,15 +1,18 @@
-function [] = hmri_calc_paws(ESTATICSmodel, mpmData, kstar, patchsize, ladjust)
+function [] = hmri_calc_paws(ESTATICSmodel, mpmData, mask, kstar, patchsize, ladjust)
 
 mscbw = 5;
 alpha = 0.025;
 wghts = [];
-                           ##
-  ##  consistency checks
-  ##
-  nv <- mpmESTATICSModel$model+2
-  mask <- mpmESTATICSModel$mask
-  nvoxel <- sum(mask)
-  sdim <- mpmESTATICSModel$sdim
+
+sdim = size(ESTATICSmodel.R2s);
+
+nv = ESTATICSmodel.nv;
+if isempty(mask)
+    mask= ones(sdim);
+end
+nvoxel = prod(sdim);
+
+% begin consistency checks
   if(any(dim(mpmESTATICSModel$invCov)!=c(nv,nv,nvoxel))) stop("inconsistent invCov")
   if(any(dim(mask)!=sdim)) stop("inconsistent mask")
   if(any(dim(mpmESTATICSModel$modelCoeff)!=c(nv,nvoxel))) stop("inconsistent parameter length")
@@ -23,6 +26,9 @@ wghts = [];
       } else stop("inconsistent mpmData")
     }#3
   }#2
+% end consistency checks
+
+
   ## determine a suitable adaptation bandwidth
   patchsize <- pmax(0,pmin(2,as.integer(patchsize)))
   lambda <- ladjust * 2 * nv * qf(1 - alpha, nv, mpmESTATICSModel$nFiles - nv)*

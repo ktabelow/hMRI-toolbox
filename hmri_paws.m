@@ -35,8 +35,10 @@ variance = res_var * inv(D'D);
 
 ESTATICSmodel.extrapolated = extrapolated;
 ESTATICSmodel.R2s = R2s;
+ESTATICSmodel.nv = numconn + 1;
+mask = [];
 % add ladjust = 1 to the list of defaults
-hmri_calc_paws(ESTATICSmodel, dataToFit, kstar = 16, patchsize = 1, ladjust)
+hmri_calc_paws(ESTATICSmodel, dataToFit,mask,  kstar = 16, patchsize = 1, ladjust)
 
 %take out denoised_weighted_data
 outputArg1 = inputArg1;
