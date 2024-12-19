@@ -1,7 +1,7 @@
 function [] = hmri_calc_paws(ESTATICSmodel, mpmData, mask, kstar, patchsize, ladjust)
 
 mscbw = 5;
-alpha = 0.025;
+alpha = 0.025; % this is not needed, could be additional input to the qf() function if desired
 wghts = [];
 
 sdim = size(ESTATICSmodel.R2s);
@@ -29,14 +29,24 @@ nvoxel = prod(sdim);
 % end consistency checks
 
 
-  ## determine a suitable adaptation bandwidth
-  patchsize <- pmax(0,pmin(2,as.integer(patchsize)))
-  lambda <- ladjust * 2 * nv * qf(1 - alpha, nv, mpmESTATICSModel$nFiles - nv)*
-    switch(patchsize+1,1,2.77,3.46)
-  #  factor 2 (analog to 2 sigma in KL) to have more common values for alpha
-  #  factor for patchsizes adjusted using simulated data
-  if(verbose) cat("using lambda=", lambda, " patchsize=", patchsize,"\n")
-  invCov <- extract(mpmESTATICSModel,"invCov")
+% determine a suitable adaptation bandwidth
+switch patchsize
+    case 1
+        corr_fac_patchsize = 1
+    case 2
+        corr_fac_patchsize = 2.77
+    case 3
+        corr_fac_patchsize = 3.46
+end
+% factor 2 (analog to 2 sigma in KL) to have more common values for alpha
+% corr_fac_patchsize adjusted using simulated data
+lambda = ladjust * 2 * nv * qf(nv, ESTATICSmodel.necho - nv) * corr_fac_patchsize;
+
+% begin write to console
+if(verbose) cat("using lambda=", lambda, " patchsize=", patchsize,"\n")
+% end write to console
+
+    invCov <- extract(mpmESTATICSModel,"invCov")
   if(mscbw>0){
     rsdx <- extract(mpmESTATICSModel,"rsigma")^2
     rsdhat <- medianFilter3D(rsdx,mscbw,mask)
@@ -237,5 +247,14 @@ vpawscov2 <- function(y,
     data= if(!is.null(zobj$data)) zobj$data else NULL
   )
 }
-
     end
+
+function qval = qf(df1, df2)
+quantile = ones(4, 40);
+quantile(1,:)=
+quantile(2,:)=
+quantile(3,:)=
+quantile(4,:)=
+qval = quantile(df1,df2);
+end
+
