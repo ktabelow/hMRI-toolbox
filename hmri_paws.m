@@ -3,7 +3,8 @@ function [denoised_weighted_data] = hmri_paws(weighted_data, params)
 
 %%inputs
 %weighted_data (cell): cell array of available contrasts
-%params (str): 3 adaptive denoising parameters kstar, lambda, patchsize
+%params (str): 3 adaptive denoising parameters kstar = 16, lambda,
+%patchsize = 1
 
 %%outputs:
 %denoised_weighted_data: adaptive denoised volumes
@@ -30,9 +31,12 @@ res_var = res_var / (num_echo - numconn + 1);
 
 variance = res_var * inv(D'D);
 
-
-
 %call PAWS with data, residuals, params (include here?)
+
+ESTATICSmodel.extrapolated = extrapolated;
+ESTATICSmodel.R2s = R2s;
+% add ladjust = 1 to the list of defaults
+hmri_calc_paws(ESTATICSmodel, dataToFit, kstar = 16, patchsize = 1, ladjust)
 
 %take out denoised_weighted_data
 outputArg1 = inputArg1;

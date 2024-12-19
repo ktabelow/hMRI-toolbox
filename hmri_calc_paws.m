@@ -1,12 +1,9 @@
-smoothESTATICS <- function(mpmESTATICSModel,
-                           mpmData = NULL,
-                           kstar = 16,
-                           alpha = 0.025,
-                           patchsize = 0,
-                           mscbw = 5,
-                           wghts = NULL,
-                           verbose = TRUE) {#1
-  ##
+function [] = hmri_calc_paws(ESTATICSmodel, mpmData, kstar, patchsize, ladjust)
+
+mscbw = 5;
+alpha = 0.025;
+wghts = [];
+                           ##
   ##  consistency checks
   ##
   nv <- mpmESTATICSModel$model+2
@@ -28,7 +25,7 @@ smoothESTATICS <- function(mpmESTATICSModel,
   }#2
   ## determine a suitable adaptation bandwidth
   patchsize <- pmax(0,pmin(2,as.integer(patchsize)))
-  lambda <- 2 * nv * qf(1 - alpha, nv, mpmESTATICSModel$nFiles - nv)*
+  lambda <- ladjust * 2 * nv * qf(1 - alpha, nv, mpmESTATICSModel$nFiles - nv)*
     switch(patchsize+1,1,2.77,3.46)
   #  factor 2 (analog to 2 sigma in KL) to have more common values for alpha
   #  factor for patchsizes adjusted using simulated data
@@ -234,3 +231,5 @@ vpawscov2 <- function(y,
     data= if(!is.null(zobj$data)) zobj$data else NULL
   )
 }
+
+    end
