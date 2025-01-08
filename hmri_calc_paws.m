@@ -116,13 +116,21 @@ spmin = 0.25, % FORTRAN needs this
 %  and optional smoothing of vector-valued images supplied in data
 %  for internal use in package qMRI
 %  Uses condensed data (voxel within mask only)
-dy = size(modelCoeff);
-nvec = dy(1);
-n1 = dy(1);
-n2 = dy(2);
-n3 = dy(3);
+nvec = size(modelCoeff, 1);
+[n1, n2, n3] = size(mask);
 nvoxel = n1 * n2 * n3;
-nsample = size(data)(1); % this should be the total number of echos over all contrasts
+nsample = size(data, 1); % this should be the total number of echos over all contrasts
+np1 = 2 * patchsize + 1;
+if n2 > 1 
+  np2 = 2 * patchsize + 1;
+else
+  np2 = 1;
+end
+if n3 > 1 
+  np3 = 2 * patchsize + 1;
+else
+  np3 = 1;
+end
 
 % the next switch can only be executed if nvec < 5, pls CHECK
 % this has to be done in hmri_paws alreadz when the variance array is
@@ -144,7 +152,7 @@ invcov = invcov(indcov, :);
  
 % create index information for voxel in mask
 nvoxel; % we need the number of voxel within the mask here!
-position = zeros(dy); % this is an array of size dy (spatial size of data)
+position = zeros(n1, n2, n3); % this is an array of size dy (spatial size of data)
 position[mask] <- 1:nvoxel 
 % position has the spatial dimensions of the data
 % it is first filled with zeros
@@ -152,18 +160,17 @@ position[mask] <- 1:nvoxel
 % are assigned numbers 1, 2, 3, ... (number of voxel within the mask) 
 % in this order
 
-  zobj <- list(bi = rep(1, nvoxel), theta = y)
-  bi <- zobj$bi
+bi = ones(nvoxel);
+theta = modelCoeff;
+
   if(verbose) cat("Progress:")
   total <- cumsum(1.25 ^ (1:kstar)) / sum(1.25 ^ (1:kstar))
   mc.cores <- setCores(, reprt = FALSE)
-  np1 <- 2 * patchsize + 1
-  np2 <- if (n2 > 1) 2 * patchsize + 1 else 1
-  np3 <- if (n3 > 1) 2 * patchsize + 1 else 1
-  k <- 1
+
+k = 1;
   hmax <- 1.25 ^ (kstar / d)
   lambda0 <- 1e32
-  mae <- NULL
+ 
   while (k <= kstar) {#4
     hakt <- gethani(1, 1.25 * hmax, 2, 1.25 ^ k, wghts, 1e-4)
     if(verbose) cat("step", k, "hakt", hakt, "time", format(Sys.time()), "\n")
