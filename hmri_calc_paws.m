@@ -165,7 +165,6 @@ position[mask] <- 1:nvoxel
   lambda0 <- 1e32
   mae <- NULL
   while (k <= kstar) {#4
-    hakt0 <- gethani(1, 1.25 * hmax, 2, 1.25 ^ (k - 1), wghts, 1e-4)
     hakt <- gethani(1, 1.25 * hmax, 2, 1.25 ^ k, wghts, 1e-4)
     if(verbose) cat("step", k, "hakt", hakt, "time", format(Sys.time()), "\n")
      dlw <- (2 * trunc(hakt / c(1, wghts)) + 1)
