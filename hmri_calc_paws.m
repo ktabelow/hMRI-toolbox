@@ -110,8 +110,9 @@ if(mscbw>0){
 
 function outvar = vpawscov2(modelCoeff, kstar = 16, invcov = NULL, mask = NULL, lambda = NULL, ladjust = 1, wghts = NULL, patchsize = 1, data = NULL)
  
-spmin = 0.25, % FORTRAN needs this
+spmin = 0.25, % FORTRAN needs this for the statistical kernel function
 lambda0 = 1e32; % FORTRAN needs this
+hmax = 1.25 ^ (kstar / 3); % maximum spatial bandwidth corresponding to the number of iteration steps kstar
 
 %  this is the version with full size invcov (triangular storage)
 %  and optional smoothing of vector-valued images supplied in data
@@ -169,7 +170,6 @@ theta = modelCoeff;
   mc.cores <- setCores(, reprt = FALSE)
 
 k = 1;
-  hmax <- 1.25 ^ (kstar / d)
  
   while (k <= kstar) {#4
     hakt <- gethani(1, 1.25 * hmax, 2, 1.25 ^ k, wghts, 1e-4)
