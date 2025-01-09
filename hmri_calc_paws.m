@@ -108,66 +108,66 @@ if(mscbw>0){
   ## END function smoothESTATICS()
 }
 
-function outvar = vpawscov2(modelCoeff, kstar = 16, invcov = NULL, mask = NULL, lambda = NULL, ladjust = 1, wghts = NULL, patchsize = 1, data = NULL) 
+function outvar = vpawscov2(modelCoeff, kstar = 16, invcov = NULL, mask = NULL, lambda = NULL, ladjust = 1, wghts = NULL, patchsize = 1, data = NULL)
+
+  spmin = 0.25, % FORTRAN needs this for the statistical kernel function
+  lambda0 = 1e32; % FORTRAN needs this
+  hmax = 1.25 ^ (kstar / 3); % maximum spatial bandwidth corresponding to the number of iteration steps kstar
+  mc.cores = 1; % number of cores for OMP parallel 
+
+  %  this is the version with full size invcov (triangular storage)
+  %  and optional smoothing of vector-valued images supplied in data
+  %  for internal use in package qMRI
+  %  Uses condensed data (voxel within mask only)
+  nvec = size(modelCoeff, 1);
+  [n1, n2, n3] = size(mask);
+  nvoxel = n1 * n2 * n3;
+  nsample = size(data, 1); % this should be the total number of echos over all contrasts
+  np1 = 2 * patchsize + 1;
+  if n2 > 1 
+    np2 = 2 * patchsize + 1;
+  else
+    np2 = 1;
+  end
+  if n3 > 1 
+    np3 = 2 * patchsize + 1;
+  else
+    np3 = 1;
+  end
+
+  % the next switch can only be executed if nvec < 5, pls CHECK
+  % this has to be done in hmri_paws alreadz when the variance array is
+  % created
+  switch nvec
+    case 1
+      indcov = [1];
+    case 2
+      indcov = [1 2 4];
+    case 3
+      indcov = [1 2 6 3 7 11 4 8 12 16];
+    case 4
+      indcov = [1 2 7 3 8 13 4 9 14 19 5 10 15 20 25];
+  end
+  dim(invcov) = c(nvec * nvec, nvoxel)
+  invcov = invcov(indcov, :);
+  % end of " this has to de done in ..."
  
- spmin = 0.25, % FORTRAN needs this for the statistical kernel function
- lambda0 = 1e32; % FORTRAN needs this
- hmax = 1.25 ^ (kstar / 3); % maximum spatial bandwidth corresponding to the number of iteration steps kstar
- mc.cores = 1; % number of cores for OMP parallel 
-
- %  this is the version with full size invcov (triangular storage)
- %  and optional smoothing of vector-valued images supplied in data
- %  for internal use in package qMRI
- %  Uses condensed data (voxel within mask only)
- nvec = size(modelCoeff, 1);
- [n1, n2, n3] = size(mask);
- nvoxel = n1 * n2 * n3;
- nsample = size(data, 1); % this should be the total number of echos over all contrasts
- np1 = 2 * patchsize + 1;
- if n2 > 1 
-   np2 = 2 * patchsize + 1;
- else
-   np2 = 1;
- end
- if n3 > 1 
-   np3 = 2 * patchsize + 1;
- else
-   np3 = 1;
- end
-
- % the next switch can only be executed if nvec < 5, pls CHECK
- % this has to be done in hmri_paws alreadz when the variance array is
- % created
- switch nvec
-   case 1
-    indcov = [1];
-   case 2
-    indcov = [1 2 4];
-   case 3
-    indcov = [1 2 6 3 7 11 4 8 12 16];
-   case 4
-    indcov = [1 2 7 3 8 13 4 9 14 19 5 10 15 20 25];
- end
- dim(invcov) = c(nvec * nvec, nvoxel)
- invcov = invcov(indcov, :);
- % end of " this has to de done in ..."
  
- 
- % create index information for voxel in mask
- nvoxel; % we need the number of voxel within the mask here!
- position = zeros(n1, n2, n3); % this is an array of size dy (spatial size of data)
- position[mask] <- 1:nvoxel 
- % position has the spatial dimensions of the data
- % it is first filled with zeros
- % all the voxels within the brain mask 
- % are assigned numbers 1, 2, 3, ... (number of voxel within the mask) 
- % in this order
+  % create index information for voxel in mask
+  nvoxel; % we need the number of voxel within the mask here!
+  position = zeros(n1, n2, n3); % this is an array of size dy (spatial size of data)
+  position[mask] <- 1:nvoxel 
+  % position has the spatial dimensions of the data
+  % it is first filled with zeros
+  % all the voxels within the brain mask 
+  % are assigned numbers 1, 2, 3, ... (number of voxel within the mask) 
+  % in this order
 
- bi = ones(nvoxel);
- theta = modelCoeff;
+  bi = ones(nvoxel);
+  theta = modelCoeff;
 
- k = 1;
- while k <= kstar
+  k = 1;
+  while k <= kstar
 
     hakt <- gethani(1, 1.25 * hmax, 2, 1.25 ^ k, wghts, 1e-4)
     if(verbose) cat("step", k, "hakt", hakt, "time", format(Sys.time()), "\n")
@@ -227,9 +227,10 @@ function outvar = vpawscov2(modelCoeff, kstar = 16, invcov = NULL, mask = NULL, 
                        as.integer(np2),
                        as.integer(np3))[c("bi", "theta", "hakt")]
     }#6
-    lambda0 <- lambda
-  k <- k + 1
- end
+  
+    lambda0 = lambda; % use the adaptation after the first step
+    k <- k + 1
+  end
 
   dim(zobj$theta) <- c(nvec, nvoxel)
   if(verbose) cat("\n")
