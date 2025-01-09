@@ -108,7 +108,7 @@ if(mscbw>0){
   ## END function smoothESTATICS()
 }
 
-function outvar = vpawscov2(modelCoeff, kstar = 16, invcov = NULL, mask = NULL, lambda = NULL, ladjust = 1, wghts = NULL, patchsize = 1, data = NULL)
+function outvar = vpawscov2(modelCoeff, kstar = 16, invcov = NULL, mask = NULL, lambda = NULL, ladjust = 1, wghts = NULL, patchsize = 1, mpmData)
 
   spmin = 0.25, % FORTRAN needs this for the statistical kernel function
   lambda0 = 1e32; % FORTRAN needs this
@@ -172,11 +172,11 @@ function outvar = vpawscov2(modelCoeff, kstar = 16, invcov = NULL, mask = NULL, 
     hakt = gethani(1, 1.25 * hmax, 2, 1.25 ^ k, wghts, 1e-4); % This function requires FORTRAN code, take from qMRI package!
     dlw = 2 * floor(hakt ./ [1, wghts]) + 1;
 
-    if(k==kstar & !is.null(data)){#5
+    if k == kstar % use this for the last iteration step
       dim(data) <- c(nsample,nvoxel)
       zobj <- .Fortran(C_pvawsme,
                        as.double(modelCoeff),
-                       as.double(data), ## data to smooth additionally
+                       as.double(mpmData), ## data to smooth additionally
                        as.integer(position),
                        as.integer(nvec),
                        as.integer(nvec * (nvec + 1) / 2),
@@ -202,7 +202,7 @@ function outvar = vpawscov2(modelCoeff, kstar = 16, invcov = NULL, mask = NULL, 
                        as.integer(np2),
                        as.integer(np3))[c("bi", "theta", "hakt","data")]
       dim(zobj$data) <- c(nsample, nvoxel)
-    } else {#6
+    else % use this for all but the last iteration step
       zobj <- .Fortran(C_pvaws2,
                        as.double(modelCoeff),
                        as.integer(position),
@@ -226,7 +226,7 @@ function outvar = vpawscov2(modelCoeff, kstar = 16, invcov = NULL, mask = NULL, 
                        as.integer(np1),
                        as.integer(np2),
                        as.integer(np3))[c("bi", "theta", "hakt")]
-    }#6
+    end
   
     lambda0 = lambda; % use the adaptation after the first step
     k <- k + 1
