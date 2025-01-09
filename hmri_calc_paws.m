@@ -79,36 +79,7 @@ if(mscbw>0){
                     patchsize = patchsize,
                     data = mpmData,
                     verbose = verbose)
-  ## assign values
-  obj <- list(modelCoeff = zobj$theta,
-              invCov = mpmESTATICSModel$invCov,
-              isConv = mpmESTATICSModel$isConv,
-              rsigma = mpmESTATICSModel$rsigma,
-              bi = zobj$bi,
-              smoothPar = c(zobj$lambda, zobj$hakt, alpha, patchsize, mscbw),
-              smoothedData = zobj$data,
-              sdim = mpmESTATICSModel$sdim,
-              nFiles = mpmESTATICSModel$nFiles,
-              t1Files = mpmESTATICSModel$t1Files,
-              pdFiles = mpmESTATICSModel$pdFiles,
-              mtFiles = mpmESTATICSModel$mtFiles,
-              model = mpmESTATICSModel$model,
-              maskFile = mpmESTATICSModel$maskFile,
-              mask = mask,
-              sigma = mpmESTATICSModel$sigma,
-              L = mpmESTATICSModel$L,
-              TR = mpmESTATICSModel$TR,
-              TE = mpmESTATICSModel$TE,
-              FA = mpmESTATICSModel$FA,
-              TEScale = mpmESTATICSModel$TEScale,
-              dataScale = mpmESTATICSModel$dataScale)
-  class(obj) <- "sESTATICSModel"
-  invisible(obj)
-  
-  ## END function smoothESTATICS()
-}
 
-function outvar = vpawscov2(modelCoeff, kstar = 16, invcov = NULL, mask = NULL, lambda = NULL, ladjust = 1, wghts = NULL, patchsize = 1, mpmData)
 
   spmin = 0.25, % FORTRAN needs this for the statistical kernel function
   lambda0 = 1e32; % FORTRAN needs this
@@ -242,6 +213,33 @@ function outvar = vpawscov2(modelCoeff, kstar = 16, invcov = NULL, mask = NULL, 
     data= if(!is.null(zobj$data)) zobj$data else NULL
   )
 
+  ## assign values
+  obj <- list(modelCoeff = zobj$theta,
+              invCov = mpmESTATICSModel$invCov,
+              isConv = mpmESTATICSModel$isConv,
+              rsigma = mpmESTATICSModel$rsigma,
+              bi = zobj$bi,
+              smoothPar = c(zobj$lambda, zobj$hakt, alpha, patchsize, mscbw),
+              smoothedData = zobj$data,
+              sdim = mpmESTATICSModel$sdim,
+              nFiles = mpmESTATICSModel$nFiles,
+              t1Files = mpmESTATICSModel$t1Files,
+              pdFiles = mpmESTATICSModel$pdFiles,
+              mtFiles = mpmESTATICSModel$mtFiles,
+              model = mpmESTATICSModel$model,
+              maskFile = mpmESTATICSModel$maskFile,
+              mask = mask,
+              sigma = mpmESTATICSModel$sigma,
+              L = mpmESTATICSModel$L,
+              TR = mpmESTATICSModel$TR,
+              TE = mpmESTATICSModel$TE,
+              FA = mpmESTATICSModel$FA,
+              TEScale = mpmESTATICSModel$TEScale,
+              dataScale = mpmESTATICSModel$dataScale)
+  class(obj) <- "sESTATICSModel"
+  invisible(obj)
+  
+  ## END function smoothESTATICS()
 end
 
 function qval = qf(df1, df2)
