@@ -16,11 +16,7 @@ function [] = hmri_calc_paws(ESTATICSmodel, mpmData, mask, kstar, patchsize, lad
   lambda = ladjust * 2 * nvec * qf(nv, nechos - nvec) * corr_fac_patchsize(patchsize); % determine the adaptation bandwidth lambda
   wghts = []; % this adjust for non-cubic voxel: if voxel size is 1.2 x 1.2 x 2.4mm wghts should be [1 1 2]
    
-  % CREATE MASK DEFAULT if not given
-  if isempty(mask)
-    mask = ones(n1, n2, n3);
-  end
-  
+    
    
  
    

@@ -1,22 +1,22 @@
 function [denoised_weighted_data] = hmri_paws(weighted_data, params)
-%main function that does PAWS
+    %main function that does PAWS
 
-mscbw = 5; % bandwidth to smooth the inverse covariance matrix 
+    mscbw = 5; % bandwidth to smooth the inverse covariance matrix 
 
-% begin consistency checks
-if(any(dim(mpmESTATICSModel$invCov)!=c(nv,nv,nvoxel))) stop("inconsistent invCov")
-    if(any(dim(mask)!=sdim)) stop("inconsistent mask")
-    if(any(dim(mpmESTATICSModel$modelCoeff)!=c(nv,nvoxel))) stop("inconsistent parameter length")
-    if(!is.null(mpmData)){#2
-      # allow for mpmData to be expanded or to only contain data within mask
-      if(any(dim(mpmData)[-1]!=nvoxel)){#3
-        if(all(dim(mpmData)[-1]==sdim)){#4
-          #  reduce mpmData to voxel within mask
-          dim(mpmData) <- c(dim(mpmData)[1],prod(sdim))
-          mpmData <- mpmData[,mask]
-        } else stop("inconsistent mpmData")
-      }#3
-    }#2
+    % begin consistency checks
+    if(any(dim(mpmESTATICSModel$invCov)!=c(nv,nv,nvoxel))) stop("inconsistent invCov")
+        if(any(dim(mask)!=sdim)) stop("inconsistent mask")
+        if(any(dim(mpmESTATICSModel$modelCoeff)!=c(nv,nvoxel))) stop("inconsistent parameter length")
+        if(!is.null(mpmData)){#2
+        # allow for mpmData to be expanded or to only contain data within mask
+        if(any(dim(mpmData)[-1]!=nvoxel)){#3
+            if(all(dim(mpmData)[-1]==sdim)){#4
+            #  reduce mpmData to voxel within mask
+            dim(mpmData) <- c(dim(mpmData)[1],prod(sdim))
+            mpmData <- mpmData[,mask]
+            } else stop("inconsistent mpmData")
+        }#3
+        }#2
     % end consistency checks
   
 %%inputs
@@ -65,6 +65,10 @@ ESTATICSmodel.nv = numconn + 1;
 ESTATICSmodel.nechos = num_echo;
 mask = [];
 
+% CREATE MASK DEFAULT if not given
+if isempty(mask)
+    mask = ones(n1, n2, n3);
+  end
 
   % extract array nv x nv x nvoxel
   invCov = ESTATICSmodel.variance
