@@ -1,15 +1,36 @@
 function [] = hmri_calc_paws(ESTATICSmodel, mpmData, mask, kstar, patchsize, ladjust)
   
-  mscbw = 5;
-  alpha = 0.025; % this is not needed, could be additional input to the qf() function if desired
+  mscbw = 5; % bandwidth to smooth the inverse covariance matrix (MOVE to hmri_paws) 
+  
+  % DEFINE ALL CONSTANTS
   wghts = []; % this adjust for non-cubic voxel: if voxel size is 1.2 x 1.2 x 2.4mm wghts should be [1 1 2]
+  spmin = 0.25, % the statistical kernel function is a plateau to spmin with linear decrease till 1
+  lambda0 = 1e32; % the first iteration step uses this adaptation parameter lambda in order to create a stable non-adaptive first estimate
+  hmax = 1.25 ^ (kstar / 3); % maximum spatial bandwidth corresponding to the number of iteration steps kstar in 3D
+  mc.cores = 1; % number of cores for OMP parallel 
+
+  nechos = ESTATICSmodel.nechos; % this should be the total number of echos over all contrasts
+  np1 = 2 * patchsize + 1;
+  if n2 > 1 
+    np2 = 2 * patchsize + 1;
+  else
+    np2 = 1;
+  end
+  if n3 > 1 
+    np3 = 2 * patchsize + 1;
+  else
+    np3 = 1;
+  end
 
   sdim = size(ESTATICSmodel.R2s);
 
-  nv = ESTATICSmodel.nv;
+  nvec = size(modelCoeff, 1);
+  nvec = ESTATICSmodel.nv;
   if isempty(mask)
       mask= ones(sdim);
   end
+  [n1, n2, n3] = size(mask);
+  nvoxel = n1 * n2 * n3;
   nvoxel = prod(sdim);
 
   % begin consistency checks
@@ -66,30 +87,6 @@ function [] = hmri_calc_paws(ESTATICSmodel, mpmData, mask, kstar, patchsize, lad
   % we expect modelCoeff to be a nv x nvoxel_within_mask 
   % we expect invCov to be nv x nv x nvoxel_within_mask
 
-  spmin = 0.25, % FORTRAN needs this for the statistical kernel function
-  lambda0 = 1e32; % FORTRAN needs this
-  hmax = 1.25 ^ (kstar / 3); % maximum spatial bandwidth corresponding to the number of iteration steps kstar
-  mc.cores = 1; % number of cores for OMP parallel 
-
-  %  this is the version with full size invcov (triangular storage)
-  %  and optional smoothing of vector-valued images supplied in data
-  %  for internal use in package qMRI
-  %  Uses condensed data (voxel within mask only)
-  nvec = size(modelCoeff, 1);
-  [n1, n2, n3] = size(mask);
-  nvoxel = n1 * n2 * n3;
-  nsample = size(data, 1); % this should be the total number of echos over all contrasts
-  np1 = 2 * patchsize + 1;
-  if n2 > 1 
-    np2 = 2 * patchsize + 1;
-  else
-    np2 = 1;
-  end
-  if n3 > 1 
-    np3 = 2 * patchsize + 1;
-  else
-    np3 = 1;
-  end
 
   % the next switch can only be executed if nvec < 5, pls CHECK
   % this has to be done in hmri_paws alreadz when the variance array is
@@ -109,6 +106,9 @@ function [] = hmri_calc_paws(ESTATICSmodel, mpmData, mask, kstar, patchsize, lad
   % end of " this has to de done in ..."
  
  
+   
+  %  this is the version with full size invcov (triangular storage)
+  %  Uses condensed data (voxel within mask only)
   % create index information for voxel in mask
   nvoxel; % we need the number of voxel within the mask here!
   position = zeros(n1, n2, n3); % this is an array of size dy (spatial size of data)
@@ -129,14 +129,14 @@ function [] = hmri_calc_paws(ESTATICSmodel, mpmData, mask, kstar, patchsize, lad
     dlw = 2 * floor(hakt ./ [1, wghts]) + 1;
 
     if k == kstar % use this for the last iteration step
-      dim(data) <- c(nsample,nvoxel)
+      dim(data) <- c(nechos,nvoxel)
       zobj <- .Fortran(C_pvawsme,
                        as.double(modelCoeff),
                        as.double(mpmData), ## data to smooth additionally
                        as.integer(position),
                        as.integer(nvec),
                        as.integer(nvec * (nvec + 1) / 2),
-                       as.integer(nsample), ## leading dimension of data
+                       as.integer(nechos), ## leading dimension of data
                        as.integer(n1),
                        as.integer(n2),
                        as.integer(n3),
@@ -146,18 +146,18 @@ function [] = hmri_calc_paws(ESTATICSmodel, mpmData, mask, kstar, patchsize, lad
                        as.double(zobj$bi),
                        bi = double(nvoxel), #binn
                        theta = double(nvec * nvoxel),
-                       data = double(nsample*nvoxel),
+                       data = double(nechos*nvoxel),
                        as.double(invcov),#
                        as.integer(mc.cores),
                        as.double(spmin),
                        double(prod(dlw)),
                        as.double(wghts),
                        double(nvec * mc.cores),
-                       double(nsample * mc.cores),
+                       double(nechos * mc.cores),
                        as.integer(np1),
                        as.integer(np2),
                        as.integer(np3))[c("bi", "theta", "hakt","data")]
-      dim(zobj$data) <- c(nsample, nvoxel)
+      dim(zobj$data) <- c(nechos, nvoxel)
     else % use this for all but the last iteration step
       zobj <- .Fortran(C_pvaws2,
                        as.double(modelCoeff),
