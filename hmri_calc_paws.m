@@ -227,7 +227,6 @@ k = 1;
                        as.integer(np2),
                        as.integer(np3))[c("bi", "theta", "hakt")]
     }#6
-    x <- 1.25 ^ k
     lambda0 <- lambda
      k <- k + 1
 
