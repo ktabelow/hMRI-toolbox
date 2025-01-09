@@ -1,7 +1,5 @@
 function [] = hmri_calc_paws(ESTATICSmodel, mpmData, mask, kstar, patchsize, ladjust)
   
-  mscbw = 5; % bandwidth to smooth the inverse covariance matrix (MOVE to hmri_paws) 
-  
   % DEFINE ALL CONSTANTS
   spmin = 0.25, % the statistical kernel function is a plateau to spmin with linear decrease till 1
   lambda0 = 1e32; % the first iteration step uses this adaptation parameter lambda in order to create a stable non-adaptive first estimate
@@ -23,64 +21,7 @@ function [] = hmri_calc_paws(ESTATICSmodel, mpmData, mask, kstar, patchsize, lad
     mask = ones(n1, n2, n3);
   end
   
-  % begin consistency checks
-  if(any(dim(mpmESTATICSModel$invCov)!=c(nv,nv,nvoxel))) stop("inconsistent invCov")
-  if(any(dim(mask)!=sdim)) stop("inconsistent mask")
-  if(any(dim(mpmESTATICSModel$modelCoeff)!=c(nv,nvoxel))) stop("inconsistent parameter length")
-  if(!is.null(mpmData)){#2
-    # allow for mpmData to be expanded or to only contain data within mask
-    if(any(dim(mpmData)[-1]!=nvoxel)){#3
-      if(all(dim(mpmData)[-1]==sdim)){#4
-        #  reduce mpmData to voxel within mask
-        dim(mpmData) <- c(dim(mpmData)[1],prod(sdim))
-        mpmData <- mpmData[,mask]
-      } else stop("inconsistent mpmData")
-    }#3
-  }#2
-  % end consistency checks
-
-  % extract array nv x nv x nvoxel
-  invCov = ESTATICSmodel.variance
-
-  % start smoothing the covariance martix to stabilise
-  % we might skip this part because we use the linear model
-  % if we use it this should to hmri_paws
-  if mscbw > 0
-    rsdx <- extract(mpmESTATICSModel,"rsigma")^2
-    rsdhat <- medianFilter3D(rsdx,mscbw,mask)
-    rsdhat[!mask] <- mean(rsdhat[mask])
-    invCov <- sweep(invCov,3:5,rsdx/rsdhat,"*")
-  end
-  dim(invCov) <- c(nv, nv, prod(sdim))
-
-  % projecting out the voxel within the mask only to save memory
-  % mask is TRUE/FALSE
-  invCov_d = invConv()
-  % Baris mask the R2s directly in hmri_paws.
-  invCov <- invCov[,,mask]
-
-  
-  % we expect modelCoeff to be a nv x nvoxel_within_mask 
-  % we expect invCov to be nv x nv x nvoxel_within_mask
-
-
-  % the next switch can only be executed if nvec < 5, pls CHECK
-  % this has to be done in hmri_paws alreadz when the variance array is
-  % created
-  switch nvec
-    case 1
-      indcov = [1];
-    case 2
-      indcov = [1 2 4];
-    case 3
-      indcov = [1 2 6 3 7 11 4 8 12 16];
-    case 4
-      indcov = [1 2 7 3 8 13 4 9 14 19 5 10 15 20 25];
-  end
-  dim(invcov) = c(nvec * nvec, nvoxel)
-  invcov = invcov(indcov, :);
-  % end of " this has to de done in ..."
- 
+   
  
    
   %  this is the version with full size invcov (triangular storage)
