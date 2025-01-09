@@ -113,6 +113,7 @@ function outvar = vpawscov2(modelCoeff, kstar = 16, invcov = NULL, mask = NULL, 
 spmin = 0.25, % FORTRAN needs this for the statistical kernel function
 lambda0 = 1e32; % FORTRAN needs this
 hmax = 1.25 ^ (kstar / 3); % maximum spatial bandwidth corresponding to the number of iteration steps kstar
+mc.cores = 1; % number of cores for OMP parallel 
 
 %  this is the version with full size invcov (triangular storage)
 %  and optional smoothing of vector-valued images supplied in data
@@ -164,10 +165,6 @@ position[mask] <- 1:nvoxel
 
 bi = ones(nvoxel);
 theta = modelCoeff;
-
-  if(verbose) cat("Progress:")
-  total <- cumsum(1.25 ^ (1:kstar)) / sum(1.25 ^ (1:kstar))
-  mc.cores <- setCores(, reprt = FALSE)
 
 k = 1;
  
@@ -232,12 +229,8 @@ k = 1;
     }#6
     x <- 1.25 ^ k
     lambda0 <- lambda
-    if (verbose & max(total) > 0) {#7
-      cat(signif(total[k], 2) * 100, "%  ", sep = "")
-      cat("mean(bi)", signif(mean(zobj$bi),3)," ")
-    }#7
-    k <- k + 1
-    gc()
+     k <- k + 1
+
   }
   dim(zobj$theta) <- c(nvec, nvoxel)
   if(verbose) cat("\n")
