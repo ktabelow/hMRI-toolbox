@@ -3,36 +3,26 @@ function [] = hmri_calc_paws(ESTATICSmodel, mpmData, mask, kstar, patchsize, lad
   mscbw = 5; % bandwidth to smooth the inverse covariance matrix (MOVE to hmri_paws) 
   
   % DEFINE ALL CONSTANTS
-  wghts = []; % this adjust for non-cubic voxel: if voxel size is 1.2 x 1.2 x 2.4mm wghts should be [1 1 2]
   spmin = 0.25, % the statistical kernel function is a plateau to spmin with linear decrease till 1
   lambda0 = 1e32; % the first iteration step uses this adaptation parameter lambda in order to create a stable non-adaptive first estimate
-  hmax = 1.25 ^ (kstar / 3); % maximum spatial bandwidth corresponding to the number of iteration steps kstar in 3D
   mc.cores = 1; % number of cores for OMP parallel 
+  corr_fac_patchsize = [1, 2.77, 3.46]; % adjustment factor for adaptation bandwidth for different patchsizes (1, 2, 3), determined using simulated data
 
+  % EXTRACT ALL REQUIRED VALUES FROM INPUT
   nechos = ESTATICSmodel.nechos; % this should be the total number of echos over all contrasts
-  np1 = 2 * patchsize + 1;
-  if n2 > 1 
-    np2 = 2 * patchsize + 1;
-  else
-    np2 = 1;
-  end
-  if n3 > 1 
-    np3 = 2 * patchsize + 1;
-  else
-    np3 = 1;
-  end
-
-  sdim = size(ESTATICSmodel.R2s);
-
-  nvec = size(modelCoeff, 1);
-  nvec = ESTATICSmodel.nv;
+  [n1, n2, n3] = size(ESTATICSmodel.R2s); % this is the spatial dimension of the data
+  nvoxel = n1 * n2 * n3; % this is the total number of voxel
+  nvec = ESTATICSmodel.nv; % number of ESTATICS model parameters
+  [np1, np2, np3] = deal(2 * patchsize + 1); % spatial dimension of the patches
+  hmax = 1.25 ^ (kstar / 3); % maximum spatial bandwidth corresponding to the number of iteration steps kstar in 3D
+  lambda = ladjust * 2 * nvec * qf(nv, nechos - nvec) * corr_fac_patchsize(patchsize); % determine the adaptation bandwidth lambda
+  wghts = []; % this adjust for non-cubic voxel: if voxel size is 1.2 x 1.2 x 2.4mm wghts should be [1 1 2]
+   
+  % CREATE MASK DEFAULT if not given
   if isempty(mask)
-      mask= ones(sdim);
+    mask = ones(n1, n2, n3);
   end
-  [n1, n2, n3] = size(mask);
-  nvoxel = n1 * n2 * n3;
-  nvoxel = prod(sdim);
-
+  
   % begin consistency checks
   if(any(dim(mpmESTATICSModel$invCov)!=c(nv,nv,nvoxel))) stop("inconsistent invCov")
   if(any(dim(mask)!=sdim)) stop("inconsistent mask")
@@ -48,20 +38,6 @@ function [] = hmri_calc_paws(ESTATICSmodel, mpmData, mask, kstar, patchsize, lad
     }#3
   }#2
   % end consistency checks
-
-
-  % determine a suitable adaptation bandwidth
-  switch patchsize
-    case 1
-      corr_fac_patchsize = 1
-    case 2
-      corr_fac_patchsize = 2.77
-    case 3
-      corr_fac_patchsize = 3.46
-  end
-  % factor 2 (analog to 2 sigma in KL) to have more common values for alpha
-  % corr_fac_patchsize adjusted using simulated data
-  lambda = ladjust * 2 * nv * qf(nv, ESTATICSmodel.necho - nv) * corr_fac_patchsize;
 
   % extract array nv x nv x nvoxel
   invCov = ESTATICSmodel.variance
