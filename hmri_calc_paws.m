@@ -1,18 +1,18 @@
 function [] = hmri_calc_paws(ESTATICSmodel, mpmData, mask, kstar, patchsize, ladjust)
+  
+  mscbw = 5;
+  alpha = 0.025; % this is not needed, could be additional input to the qf() function if desired
+  wghts = []; % this adjust for non-cubic voxel: if voxel size is 1.2 x 1.2 x 2.4mm wghts should be [1 1 2]
 
-mscbw = 5;
-alpha = 0.025; % this is not needed, could be additional input to the qf() function if desired
-wghts = []; % this adjust for non-cubic voxel: if voxel size is 1.2 x 1.2 x 2.4mm wghts should be [1 1 2]
+  sdim = size(ESTATICSmodel.R2s);
 
-sdim = size(ESTATICSmodel.R2s);
+  nv = ESTATICSmodel.nv;
+  if isempty(mask)
+      mask= ones(sdim);
+  end
+  nvoxel = prod(sdim);
 
-nv = ESTATICSmodel.nv;
-if isempty(mask)
-    mask= ones(sdim);
-end
-nvoxel = prod(sdim);
-
-% begin consistency checks
+  % begin consistency checks
   if(any(dim(mpmESTATICSModel$invCov)!=c(nv,nv,nvoxel))) stop("inconsistent invCov")
   if(any(dim(mask)!=sdim)) stop("inconsistent mask")
   if(any(dim(mpmESTATICSModel$modelCoeff)!=c(nv,nvoxel))) stop("inconsistent parameter length")
@@ -26,60 +26,45 @@ nvoxel = prod(sdim);
       } else stop("inconsistent mpmData")
     }#3
   }#2
-% end consistency checks
+  % end consistency checks
 
 
-% determine a suitable adaptation bandwidth
-switch patchsize
+  % determine a suitable adaptation bandwidth
+  switch patchsize
     case 1
-        corr_fac_patchsize = 1
+      corr_fac_patchsize = 1
     case 2
-        corr_fac_patchsize = 2.77
+      corr_fac_patchsize = 2.77
     case 3
-        corr_fac_patchsize = 3.46
-end
-% factor 2 (analog to 2 sigma in KL) to have more common values for alpha
-% corr_fac_patchsize adjusted using simulated data
-lambda = ladjust * 2 * nv * qf(nv, ESTATICSmodel.necho - nv) * corr_fac_patchsize;
+      corr_fac_patchsize = 3.46
+  end
+  % factor 2 (analog to 2 sigma in KL) to have more common values for alpha
+  % corr_fac_patchsize adjusted using simulated data
+  lambda = ladjust * 2 * nv * qf(nv, ESTATICSmodel.necho - nv) * corr_fac_patchsize;
 
-% begin write to console
-if(verbose) cat("using lambda=", lambda, " patchsize=", patchsize,"\n")
-% end write to console
+  % extract array nv x nv x nvoxel
+  invCov = ESTATICSmodel.variance
 
-% extract array nv x nv x nvoxel
-invCov = ESTATICSmodel.variance
-
-% start smoothing the covariance martix to stabilise
-% we might skip this part because we use the linear model
-% if we use it this should to hmri_paws
-if(mscbw>0){
+  % start smoothing the covariance martix to stabilise
+  % we might skip this part because we use the linear model
+  % if we use it this should to hmri_paws
+  if mscbw > 0
     rsdx <- extract(mpmESTATICSModel,"rsigma")^2
     rsdhat <- medianFilter3D(rsdx,mscbw,mask)
     rsdhat[!mask] <- mean(rsdhat[mask])
     invCov <- sweep(invCov,3:5,rsdx/rsdhat,"*")
-  }
-  dim(invCov) <- c(nv,nv,prod(sdim))
+  end
+  dim(invCov) <- c(nv, nv, prod(sdim))
 
   % projecting out the voxel within the mask only to save memory
   % mask is TRUE/FALSE
   invCov_d = invConv()
-  %Baris mask the R2s directly in hmri_paws.
+  % Baris mask the R2s directly in hmri_paws.
   invCov <- invCov[,,mask]
 
   
   % we expect modelCoeff to be a nv x nvoxel_within_mask 
   % we expect invCov to be nv x nv x nvoxel_within_mask
-  zobj <- vpawscov2(modelCoeff, % these are the extrapolates and the R2s
-                    kstar,
-                    invCov,
-                    mask,
-                    ladjust = ladjust, 
-                    lambda = lambda,
-                    wghts = wghts,
-                    patchsize = patchsize,
-                    data = mpmData,
-                    verbose = verbose)
-
 
   spmin = 0.25, % FORTRAN needs this for the statistical kernel function
   lambda0 = 1e32; % FORTRAN needs this
