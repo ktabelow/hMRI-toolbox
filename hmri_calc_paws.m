@@ -169,9 +169,9 @@ function outvar = vpawscov2(modelCoeff, kstar = 16, invcov = NULL, mask = NULL, 
   k = 1;
   while k <= kstar
 
-    hakt <- gethani(1, 1.25 * hmax, 2, 1.25 ^ k, wghts, 1e-4)
-    if(verbose) cat("step", k, "hakt", hakt, "time", format(Sys.time()), "\n")
-     dlw <- (2 * trunc(hakt / c(1, wghts)) + 1)
+    hakt = gethani(1, 1.25 * hmax, 2, 1.25 ^ k, wghts, 1e-4); % This function requires FORTRAN code, take from qMRI package!
+
+       dlw <- (2 * trunc(hakt / c(1, wghts)) + 1)
     if(k==kstar & !is.null(data)){#5
       dim(data) <- c(nsample,nvoxel)
       zobj <- .Fortran(C_pvawsme,
