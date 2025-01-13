@@ -1,4 +1,4 @@
-function [] = hmri_calc_paws(ESTATICSmodel, mpmData, mask, kstar, patchsize, ladjust)
+function [] = hmri_calc_paws(, mpmData, invCov, mask, necho, nvec, kstar, patchsize, ladjust)
   
   % DEFINE ALL CONSTANTS
   spmin = 0.25, % the statistical kernel function is a plateau to spmin with linear decrease till 1
@@ -7,10 +7,8 @@ function [] = hmri_calc_paws(ESTATICSmodel, mpmData, mask, kstar, patchsize, lad
   corr_fac_patchsize = [1, 2.77, 3.46]; % adjustment factor for adaptation bandwidth for different patchsizes (1, 2, 3), determined using simulated data
 
   % EXTRACT ALL REQUIRED VALUES FROM INPUT
-  nechos = ESTATICSmodel.nechos; % this should be the total number of echos over all contrasts
-  [n1, n2, n3] = size(ESTATICSmodel.R2s); % this is the spatial dimension of the data
+  [n1, n2, n3] = size(modelCoeff.R2s); % this is the spatial dimension of the data
   nvoxel = n1 * n2 * n3; % this is the total number of voxel
-  nvec = ESTATICSmodel.nv; % number of ESTATICS model parameters
   [np1, np2, np3] = deal(2 * patchsize + 1); % spatial dimension of the patches
   hmax = 1.25 ^ (kstar / 3); % maximum spatial bandwidth corresponding to the number of iteration steps kstar in 3D
   lambda = ladjust * 2 * nvec * qf(nv, nechos - nvec) * corr_fac_patchsize(patchsize); % determine the adaptation bandwidth lambda
