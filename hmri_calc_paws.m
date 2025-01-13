@@ -1,4 +1,4 @@
-function [] = hmri_calc_paws(, mpmData, invCov, mask, necho, nvec, kstar, patchsize, ladjust)
+function [smoothmpmData] = hmri_calc_paws(modelCoeff, mpmData, invCov, mask, necho, nvec, kstar, patchsize, ladjust)
   
   % DEFINE ALL CONSTANTS
   spmin = 0.25, % the statistical kernel function is a plateau to spmin with linear decrease till 1
