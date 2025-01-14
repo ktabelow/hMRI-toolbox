@@ -20,15 +20,11 @@ function [smoothmpmData] = hmri_calc_paws(modelCoeff, mpmData, invCov, mask, nec
    
   %  this is the version with full size invcov (triangular storage)
   %  Uses condensed data (voxel within mask only)
-  % create index information for voxel in mask
-  nvoxel = nnz(mask); % we need the number of voxel within the mask here!
-  position = zeros(n1, n2, n3); % this is an array of size dy (spatial size of data)
-  position[mask > 0] <- 1:nvoxel; 
-  % position has the spatial dimensions of the data
-  % it is first filled with zeros
-  % all the voxels within the brain mask 
-  % are assigned numbers 1, 2, 3, ... (number of voxel within the mask) 
-  % in this order
+  
+  % create an array with the spatial dimensions of the data
+  % and numbers 1, 2, 3, ... for all voxels within the mask in this order
+  position = zeros(n1, n2, n3); 
+  position[mask > 0] <- 1:nnz(mask);
 
   bi = ones(nvoxel);
   theta = modelCoeff;
