@@ -1,4 +1,4 @@
-function [smoothedmpmData] = hmri_calc_paws(modelCoeff, mpmData, invCov, mask, necho, nvec, wghts, kstar, patchsize, ladjust)
+function [smoothedmpmData] = hmri_calc_paws(modelCoeff, mpmData, invCov, mask, nechos, nvec, wghts, kstar, patchsize, ladjust)
   
   % DEFINE ALL CONSTANTS
   spmin = 0.25, % the statistical kernel function is a plateau to spmin with linear decrease till 1
@@ -30,67 +30,66 @@ function [smoothedmpmData] = hmri_calc_paws(modelCoeff, mpmData, invCov, mask, n
     dlw = 2 * floor(hakt ./ [1, wghts]) + 1;
 
     if k == kstar % use this for the last iteration step
-      dim(data) <- c(nechos,nvoxel)
-      zobj <- .Fortran(C_pvawsme,
-                       as.double(modelCoeff),
-                       as.double(mpmData), ## data to smooth additionally
-                       as.integer(position),
-                       as.integer(nvec),
-                       as.integer(nvec * (nvec + 1) / 2),
-                       as.integer(nechos), ## leading dimension of data
-                       as.integer(n1),
-                       as.integer(n2),
-                       as.integer(n3),
-                       hakt = as.double(hakt),
-                       as.double(lambda0),
-                       as.double(zobj$theta),
-                       as.double(zobj$bi),
-                       bi = double(nvoxel), #binn
-                       theta = double(nvec * nvoxel),
-                       data = double(nechos*nvoxel),
-                       as.double(invcov),#
-                       as.integer(mc.cores),
-                       as.double(spmin),
-                       double(prod(dlw)),
-                       as.double(wghts),
-                       double(nvec * mc.cores),
-                       double(nechos * mc.cores),
-                       as.integer(np1),
-                       as.integer(np2),
-                       as.integer(np3))[c("bi", "theta", "hakt","data")]
-      dim(zobj$data) <- c(nechos, nvoxel)
+
+      [bi, theta, hakt, smoothedmpmData] = pvawslast(modelCoeff,  % CALL pvawsme
+                                                     mpmData,
+                                                     position,
+                                                     nvec,
+                                                     nvec * (nvec + 1) / 2,
+                                                     nechos,
+                                                     n1,
+                                                     n2,
+                                                     n3,
+                                                     hakt = as.double(hakt), % create space in memory for PLHS
+                                                     lambda0,
+                                                     theta,
+                                                     bi,
+                                                     bi = double(nvoxel), % create space in memory for PLHS
+                                                     theta = double(nvec * nvoxel), % create space in memory for PLHS
+                                                     data = double(nechos * nvoxel), % create space in memory for PLHS
+                                                     invCov,
+                                                     mc.cores,
+                                                     spmin,
+                                                     double(prod(dlw)), % create space in memory
+                                                     wghts,
+                                                     double(nvec * mc.cores), % create space in memory
+                                                     double(nechos * mc.cores), % create space in memory
+                                                     np1,
+                                                     np2,
+                                                     np3);
+
     else % use this for all but the last iteration step
-      zobj <- .Fortran(C_pvaws2,
-                       as.double(modelCoeff),
-                       as.integer(position),
-                       as.integer(nvec),
-                       as.integer(nvec * (nvec + 1) / 2),
-                       as.integer(n1),
-                       as.integer(n2),
-                       as.integer(n3),
-                       hakt = as.double(hakt),
-                       as.double(lambda0),
-                       as.double(zobj$theta),
-                       as.double(zobj$bi),
-                       bi = double(nvoxel), #binn
-                       theta = double(nvec * nvoxel),
-                       as.double(invcov),# compact storage
-                       as.integer(mc.cores),
-                       as.double(spmin),
-                       double(prod(dlw)),
-                       as.double(wghts),
-                       double(nvec * mc.cores),
-                       as.integer(np1),
-                       as.integer(np2),
-                       as.integer(np3))[c("bi", "theta", "hakt")]
+
+      [bi, theta, hakt] = pvaws(modelCoeff, % CALL pvaws2 
+                                position,
+                                nvec,
+                                nvec * (nvec + 1) / 2,
+                                n1,
+                                n2,
+                                n3,
+                                hakt = as.double(hakt), % create space in memory for PLHS
+                                lambda0,
+                                theta,
+                                bi,
+                                bi = double(nvoxel), % create space in memory for PLHS
+                                theta = double(nvec * nvoxel), % create space in memory for PLHS
+                                invCov,
+                                mc.cores,
+                                spmin,
+                                double(prod(dlw)), % create space in memory
+                                wghts,
+                                double(nvec * mc.cores), % create space in memory
+                                np1,
+                                np2,
+                                np3);
+
     end
   
     lambda0 = lambda; % use the determined adaptation bandwidth after the first step
     k <- k + 1 % next iteration step
   end
 
-  % return the smoothed MPM data
-  smoothedmpmData = zobj$data
+  % return smoothedmpmData (the smoothed MPM data) calculated in last iteration step
 
 end
 
