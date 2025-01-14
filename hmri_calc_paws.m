@@ -89,43 +89,9 @@ function [smoothedmpmData] = hmri_calc_paws(modelCoeff, mpmData, invCov, mask, n
     k <- k + 1 % next iteration step
   end
 
-  dim(zobj$theta) <- c(nvec, nvoxel)
-  if(verbose) cat("\n")
-  list(
-    theta=zobj$theta,
-    hakt=hakt,
-    lambda=lambda,
-    bi = zobj$bi,
-    data= if(!is.null(zobj$data)) zobj$data else NULL
-  )
+  % return the smoothed MPM data
+  smoothedmpmData = zobj$data
 
-  ## assign values
-  obj <- list(modelCoeff = zobj$theta,
-              invCov = mpmESTATICSModel$invCov,
-              isConv = mpmESTATICSModel$isConv,
-              rsigma = mpmESTATICSModel$rsigma,
-              bi = zobj$bi,
-              smoothPar = c(zobj$lambda, zobj$hakt, alpha, patchsize, mscbw),
-              smoothedData = zobj$data,
-              sdim = mpmESTATICSModel$sdim,
-              nFiles = mpmESTATICSModel$nFiles,
-              t1Files = mpmESTATICSModel$t1Files,
-              pdFiles = mpmESTATICSModel$pdFiles,
-              mtFiles = mpmESTATICSModel$mtFiles,
-              model = mpmESTATICSModel$model,
-              maskFile = mpmESTATICSModel$maskFile,
-              mask = mask,
-              sigma = mpmESTATICSModel$sigma,
-              L = mpmESTATICSModel$L,
-              TR = mpmESTATICSModel$TR,
-              TE = mpmESTATICSModel$TE,
-              FA = mpmESTATICSModel$FA,
-              TEScale = mpmESTATICSModel$TEScale,
-              dataScale = mpmESTATICSModel$dataScale)
-  class(obj) <- "sESTATICSModel"
-  invisible(obj)
-  
-  ## END function smoothESTATICS()
 end
 
 function qval = qf(df1, df2)
