@@ -67,7 +67,9 @@ function [denoised_weighted_data] = hmri_paws(weighted_data, params)
   if isempty(mask)
       mask = ones(n1, n2, n3);
   end
-
+  
+  wghts = []; % this adjust for non-cubic voxel: if voxel size is 1.2 x 1.2 x 2.4mm wghts should be [1 1 2]
+ 
   % extract array nv x nv x nvoxel
   invCov = ESTATICSmodel.variance
 
@@ -111,7 +113,7 @@ function [denoised_weighted_data] = hmri_paws(weighted_data, params)
 
 
   % add ladjust = 1 to the list of defaults
-  hmri_calc_paws(modelCoeff, dataToFit, invCov, mask,  necho = num_echo, nvec = numconn + 1, kstar = 16, patchsize = 1, ladjust)
+  hmri_calc_paws(modelCoeff, dataToFit, invCov, mask,  necho = num_echo, nvec = numconn + 1, wghts, kstar = 16, patchsize = 1, ladjust)
 
   %take out denoised_weighted_data
   outputArg1 = inputArg1;
