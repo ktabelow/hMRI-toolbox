@@ -1,24 +1,9 @@
 function [denoised_weighted_data] = hmri_paws(weighted_data, params)
-    %main function that does PAWS
-
-    mscbw = 5; % bandwidth to smooth the inverse covariance matrix 
-
-    % begin consistency checks
-    if(any(dim(mpmESTATICSModel$invCov)!=c(nv,nv,nvoxel))) stop("inconsistent invCov")
-        if(any(dim(mask)!=sdim)) stop("inconsistent mask")
-        if(any(dim(mpmESTATICSModel$modelCoeff)!=c(nv,nvoxel))) stop("inconsistent parameter length")
-        if(!is.null(mpmData)){#2
-        # allow for mpmData to be expanded or to only contain data within mask
-        if(any(dim(mpmData)[-1]!=nvoxel)){#3
-            if(all(dim(mpmData)[-1]==sdim)){#4
-            #  reduce mpmData to voxel within mask
-            dim(mpmData) <- c(dim(mpmData)[1],prod(sdim))
-            mpmData <- mpmData[,mask]
-            } else stop("inconsistent mpmData")
-        }#3
-        }#2
-    % end consistency checks
-  
+  %main function that does PAWS
+    
+  % DEFINE ALL CONSTANTS
+  mscbw = 5; % bandwidth to smooth the inverse covariance matrix 
+      
   %%inputs
   %weighted_data (cell): cell array of available contrasts
   %params (str): 3 adaptive denoising parameters kstar = 16, lambda,
@@ -27,7 +12,7 @@ function [denoised_weighted_data] = hmri_paws(weighted_data, params)
   %%outputs:
   %denoised_weighted_data: adaptive denoised volumes
 
-  %populate parameters from arguments
+  % populate parameters from arguments
 
   %call hmri_coreg before denoising
 
@@ -111,6 +96,11 @@ function [denoised_weighted_data] = hmri_paws(weighted_data, params)
   invcov = invcov(indcov, :);
   % end of " this has to de done in ..."
 
+  % CONSISTENCY CHECKS (TBD somewhere) TO CHECK
+  % size(mask) = [n1, n2, n3]
+  % size(modelCoeff) = [nvec, n1, n2, n3]
+  % size(mpmData) = [nechos, n1, n2, n3]
+  % mpmData = mpmData[, mask];
 
   % add ladjust = 1 to the list of defaults
   hmri_calc_paws(modelCoeff, dataToFit, invCov, mask,  necho = num_echo, nvec = numconn + 1, wghts, kstar = 16, patchsize = 1, ladjust)
