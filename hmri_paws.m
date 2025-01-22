@@ -1,5 +1,16 @@
 function [denoised_weighted_data] = hmri_paws(weighted_data, params)
   %main function that does PAWS
+
+  %%%%%%%%% define constants for manual testing (move the constants out and delete after testing)
+  %paws params
+  kstar = params.kstar;
+  patchsize = params.patchsize;
+  ladjust = params.ladjust;
+  mask = params.mask{1}; %take as TRUE for testing
+
+  %hmri params
+  fit_method = 'OLS';
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
   % DEFINE ALL CONSTANTS
   mscbw = 5; % bandwidth to smooth the inverse covariance matrix 
