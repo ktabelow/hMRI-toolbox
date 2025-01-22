@@ -1,7 +1,7 @@
 function [smoothedmpmData] = hmri_calc_paws(modelCoeff, mpmData, invCov, mask, nechos, nvec, wghts, kstar, patchsize, ladjust)
   
   % DEFINE ALL CONSTANTS
-  spmin = 0.25, % the statistical kernel function is a plateau to spmin with linear decrease till 1
+  spmin = 0.25; % the statistical kernel function is a plateau to spmin with linear decrease till 1
   lambda0 = 1e32; % the first iteration step uses this adaptation parameter lambda0 in order to create a stable non-adaptive first estimate
   mc.cores = 1; % number of cores for OMP parallel 
   corr_fac_patchsize = [1, 2.77, 3.46]; % adjustment factor for adaptation bandwidth for different patchsizes (1, 2, 3), determined using simulated data
@@ -11,12 +11,12 @@ function [smoothedmpmData] = hmri_calc_paws(modelCoeff, mpmData, invCov, mask, n
   nvoxel = n1 * n2 * n3; % this is the total number of voxel
   [np1, np2, np3] = deal(2 * patchsize + 1); % spatial dimension of the patches
   hmax = 1.25 ^ (kstar / 3); % maximum spatial bandwidth corresponding to the number of iteration steps kstar in 3D
-  lambda = ladjust * 2 * nvec * qf(nv, nechos - nvec) * corr_fac_patchsize(patchsize); % determine the adaptation bandwidth lambda
+  lambda = ladjust * 2 * nvec * qf(nvec, nechos - nvec) * corr_fac_patchsize(patchsize); % determine the adaptation bandwidth lambda
     
   % create an array with the spatial dimensions of the data
   % and numbers 1, 2, 3, ... for all voxels within the mask in this order
   position = zeros(n1, n2, n3); 
-  position[mask > 0] <- 1:nnz(mask);
+  position(mask > 0) = 1:nnz(mask);
 
   % create arrays for the sum of adaptation weights (bi) and for the data used to determine them (theta), used by FORTRAN subroutine
   bi = ones(nvoxel);
@@ -86,7 +86,7 @@ function [smoothedmpmData] = hmri_calc_paws(modelCoeff, mpmData, invCov, mask, n
     end
   
     lambda0 = lambda; % use the determined adaptation bandwidth after the first step
-    k <- k + 1 % next iteration step
+    k = k + 1; % next iteration step
   end
 
   % return smoothedmpmData (the smoothed MPM data) calculated in last iteration step
