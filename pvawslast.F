@@ -108,7 +108,11 @@ C     create all the PLHS
 
 C     create all arrays for internal calculations 
 
-      dlw = 2 * floor(hakt ./ [1, wghts]) + 1;
+C     dlw = 2 * floor(hakt ./ [1, wghts]) + 1;
+      DLW1 = 2 * floor(hakt) + 1
+      DLW2 = 2 * floor(hakt / WGHT_IN_PR(1)) + 1      CORRECT?
+      DLW3 = 2 * floor(hakt / WGHT_IN_PR(2)) + 1      CORRECT?
+      DLW = DLW1 * DLW2 * DLW3
 
       LWGHT_LOCAL = MXCREATEDOUBLEMATRIX(ONE, DWL, 0)       CORRECT? DWL UNDEFINED
       SWJY_LOCAL = MXCREATEDOUBLEMATRIX(NV, NCORES_IN, 0)   CORRECT?
