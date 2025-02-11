@@ -116,16 +116,6 @@ C     create all the PLHS
       SWJY_LOCAL_PR = MXGETPR(SWJY_LOCAL)
       SWJD_LOCAL_PR = MXGETPR(SWJD_LOCAL)
 
-C     calculate NVD here? 
-C     MWSIZE NVD
-C     NVD = NV_IN * (NV_IN + 1) / 2
-C
-C     others?
-
-C     do we need the BIN_IN_PR, THNEW_IN_PR, LWGTH_IN_PR, SWJY_IN_PR? in the interface?
-
-C     do we need hakt as return value?
-
 C     Call the actual FORTRAN subroutine
 
       CALL pvawsme(%val(Y_IN_PR), 
