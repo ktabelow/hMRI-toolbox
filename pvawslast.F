@@ -16,19 +16,13 @@ C                                              hakt,   10
 C                                              lambda, 11
 C                                              theta,  12
 C                                              bi,     13
-C                                              bin,    14 create space in memory for PLHS
-C                                              thnew,  15 create space in memory for PLHS
-C                                              ydnew,  16 create space in memory for PLHS
-C                                              invcov, 17
-C                                              ncores, 18
-C                                              spmin,  19
-C                                              lwght,  20 create space in memory
-C                                              wght,   21
-C                                              swjy,   22 create space in memory
-C                                              swjd,   23 create space in memory
-C                                              np1,    24
-C                                              np2,    25
-C                                              np3);   26
+C                                              invcov, 14
+C                                              ncores, 15
+C                                              spmin,  16
+C                                              wght,   17
+C                                              np1,    18
+C                                              np2,    19
+C                                              np3);   20
 
       SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
 
@@ -63,21 +57,21 @@ C     local input pointers
       MWPOINTER POS_IN_PR
       MWPOINTER THETA_IN_PR
       MWPOINTER BI_IN_PR
-      MWPOINTER BIN_IN_PR
-      MWPOINTER THNEW_IN_PR
+      MWPOINTER BIN_OUT_PR
+      MWPOINTER THNEW_OUT_PR
       MWPOINTER YDNEW_OUT_PR
       MWPOINTER INVCOV_IN_PR
-      MWPOINTER LWGHT_IN_PR
+      MWPOINTER LWGHT_LOCAL_PR
       MWPOINTER WGHT_IN_PR
-      MWPOINTER SWJY_IN_PR
-      MWPOINTER SWJD_IN_PR
+      MWPOINTER SWJY_LOCAL_PR
+      MWPOINTER SWJD_LOCAL_PR
 
 C     Check for proper number of arguments
 
       IF (NRHS .NE. 26) THEN
-         CALL MEXERRMSGTXT('pvawslast requires 26 input arguments')
+         CALL MEXERRMSGTXT('pvawslast requires 20 input arguments')
       ELSEIF (NLHS .NE. 4) THEN
-         CALL MEXERRMSGTXT('pvawslast requires 4 output argument')
+         CALL MEXERRMSGTXT('pvawslast requires 3 output argument')
       ENDIF
 
 C     get all the PRHS
@@ -95,19 +89,13 @@ C     get all the PRHS
       LAMBDA_IN = MXGETSCALAR(PRHS(11))
       THETA_IN_PR = MXGETPR(PRHS(12))
       BI_IN_PR = MXGETPR(PRHS(13))
-      BIN_IN_PR = MXGETPR(PRHS(14))          DO WE NEED THIS AT ALL??
-      THNEW_IN_PR = MXGETPR(PRHS(15))        DO WE NEED THIS AT ALL??
-      YDNEW_IN_PR = MXGETPR(PRHS(16))        DO WE NEED THIS AT ALL??
-      INVCOV_IN_PR = MXGETPR(PRHS(17))
-      NCORES_IN = INT(MXGETSCALAR(PRHS(18)))
-      SPMIN_IN = INT(MXGETSCALAR(PRHS(19)))
-      LWGHT_IN_PR = MXGETPR(PRHS(20))        DO WE NEED THIS AT ALL??
-      WGHT_IN_PR = MXGETPR(PRHS(21))
-      SWJY_IN_PR = MXGETPR(PRHS(22))         DO WE NEED THIS AT ALL??
-      SWJD_IN_PR = MXGETPR(PRHS(23))         DO WE NEED THIS AT ALL??
-      NP1_IN = INT(MXGETSCALAR(PRHS(24)))
-      NP2_IN = INT(MXGETSCALAR(PRHS(25)))
-      NP3_IN = INT(MXGETSCALAR(PRHS(26)))
+      INVCOV_IN_PR = MXGETPR(PRHS(14))
+      NCORES_IN = INT(MXGETSCALAR(PRHS(15)))
+      SPMIN_IN = INT(MXGETSCALAR(PRHS(16)))
+      WGHT_IN_PR = MXGETPR(PRHS(17))
+      NP1_IN = INT(MXGETSCALAR(PRHS(18)))
+      NP2_IN = INT(MXGETSCALAR(PRHS(19)))
+      NP3_IN = INT(MXGETSCALAR(PRHS(20)))
 
 C     create all the PLHS
       
@@ -117,6 +105,8 @@ C     create all the PLHS
       BI_OUT_PR = MXGETPR(PLHS(1))
       THNEW_OUT_PR = MXGETPR(PLHS(2))
       YDNEW_OUT_PR = MXGETPR(PLHS(3))
+
+      dlw = 2 * floor(hakt ./ [1, wghts]) + 1;
 
       LWGHT_LOCAL = MXCREATEDOUBLEMATRIX(ONE, DWL, 0)       CORRECT? DWL UNDEFINED
       SWJY_LOCAL = MXCREATEDOUBLEMATRIX(NV, NCORES_IN, 0)   CORRECT?

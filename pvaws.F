@@ -14,17 +14,13 @@ C                         hakt,      8
 C                         lambda,    9
 C                         theta,    10
 C                         bi,       11
-C                         bin,      12 create space in memory for PLHS
-C                         thnew,    13 create space in memory for PLHS
-C                         invcov,   14
-C                         ncores,   15
-C                         spmin,    16
-C                         lwght,    17 create space in memory
-C                         wght,     18
-C                         swjy,     19 create space in memory
-C                         np1,      20
-C                         np2,      21
-C                         np3);     22
+C                         invcov,   12
+C                         ncores,   13
+C                         spmin,    14
+C                         wght,     15
+C                         np1,      16
+C                         np2,      17
+C                         np3);     18
 C
 
 
@@ -61,19 +57,19 @@ C     local input pointers
       MWPOINTER POS_IN_PR
       MWPOINTER THETA_IN_PR
       MWPOINTER BI_IN_PR
-      MWPOINTER BIN_IN_PR
-      MWPOINTER THNEW_IN_PR
+      MWPOINTER BIN_OUT_PR
+      MWPOINTER THNEW_OUT_PR
       MWPOINTER INVCOV_IN_PR
-      MWPOINTER LWGHT_IN_PR
+      MWPOINTER LWGHT_LOCAL_PR
       MWPOINTER WGHT_IN_PR
-      MWPOINTER SWJY_IN_PR
+      MWPOINTER SWJY_LOCAL_PR
 
 C     Check for proper number of arguments
 
       IF (NRHS .NE. 26) THEN
-         CALL MEXERRMSGTXT('pvaws requires 22 input arguments')
+         CALL MEXERRMSGTXT('pvaws requires 18 input arguments')
       ELSEIF (NLHS .NE. 4) THEN
-         CALL MEXERRMSGTXT('pvaws requires 3 output argument')
+         CALL MEXERRMSGTXT('pvaws requires 2 output argument')
       ENDIF
 
 C     get all the PRHS
@@ -89,25 +85,23 @@ C     get all the PRHS
       LAMBDA_IN = MXGETSCALAR(PRHS(9))
       THETA_IN_PR = MXGETPR(PRHS(10))
       BI_IN_PR = MXGETPR(PRHS(11))
-      BIN_IN_PR = MXGETPR(PRHS(12))          DO WE NEED THIS AT ALL??
-      THNEW_IN_PR = MXGETPR(PRHS(13))        DO WE NEED THIS AT ALL??
-      INVCOV_IN_PR = MXGETPR(PRHS(14))
-      NCORES_IN = INT(MXGETSCALAR(PRHS(15)))
-      SPMIN_IN = INT(MXGETSCALAR(PRHS(16)))
-      LWGHT_IN_PR = MXGETPR(PRHS(17))        DO WE NEED THIS AT ALL??
-      WGHT_IN_PR = MXGETPR(PRHS(18))
-      SWJY_IN_PR = MXGETPR(PRHS(19))         DO WE NEED THIS AT ALL??
-      NP1_IN = INT(MXGETSCALAR(PRHS(20)))
-      NP2_IN = INT(MXGETSCALAR(PRHS(21)))
-      NP3_IN = INT(MXGETSCALAR(PRHS(22)))
+      INVCOV_IN_PR = MXGETPR(PRHS(12))
+      NCORES_IN = INT(MXGETSCALAR(PRHS(13)))
+      SPMIN_IN = INT(MXGETSCALAR(PRHS(14)))
+      WGHT_IN_PR = MXGETPR(PRHS(15))
+      NP1_IN = INT(MXGETSCALAR(PRHS(16)))
+      NP2_IN = INT(MXGETSCALAR(PRHS(17)))
+      NP3_IN = INT(MXGETSCALAR(PRHS(18)))
 
 C     create all the PLHS
       
       PLHS(1) = MXCREATEDOUBLEMATRIX(1, NV_IN, 0)           CORRECT?
       PLHS(2) = MXCREATEDOUBLEMATRIX(NV_IN, NV_IN, 0)       CORRECT?
 
-      BI_OUT_PR = MXGETPR(PLHS(1))
+      BIN_OUT_PR = MXGETPR(PLHS(1))
       THNEW_OUT_PR = MXGETPR(PLHS(2))
+
+      dlw = 2 * floor(hakt ./ [1, wghts]) + 1;
 
       LWGHT_LOCAL = MXCREATEDOUBLEMATRIX(ONE, DWL, 0)       CORRECT? DWL UNDEFINED
       SWJY_LOCAL = MXCREATEDOUBLEMATRIX(NV, NCORES_IN, 0)   CORRECT?
@@ -138,7 +132,7 @@ C     Call the actual FORTRAN subroutine
      +            LAMBDA_IN, 
      +            %val(THETA_IN_PR), 
      +            %val(BI_IN_PR), 
-     +            %val(BI_OUT_PR), 
+     +            %val(BIN_OUT_PR), 
      +            %val(THNEW_OUT_PR),
      +            %val(INVCOV_IN_PR), 
      +            NCORES_IN, 
