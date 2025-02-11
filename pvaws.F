@@ -101,6 +101,8 @@ C     create all the PLHS
       BIN_OUT_PR = MXGETPR(PLHS(1))
       THNEW_OUT_PR = MXGETPR(PLHS(2))
 
+C     create all arrays for internal calculations 
+
       dlw = 2 * floor(hakt ./ [1, wghts]) + 1;
 
       LWGHT_LOCAL = MXCREATEDOUBLEMATRIX(ONE, DWL, 0)       CORRECT? DWL UNDEFINED
