@@ -18,9 +18,10 @@ C                         invcov,   12
 C                         ncores,   13
 C                         spmin,    14
 C                         wght,     15
-C                         np1,      16
-C                         np2,      17
-C                         np3);     18
+C                         dlw,      16
+C                         np1,      17
+C                         np2,      18
+C                         np3);     19
 C
 
 
@@ -41,7 +42,8 @@ C     local integer variables
       MWSIZE N2_IN
       MWSIZE N3_IN 
       MWSIZE NCORES_IN
-      MWSIZE SPMIN_IN 
+      MWSIZE SPMIN_IN
+      MWSIZE DLW_IN 
       MWSIZE NP1_IN
       MWSIZE NP2_IN
       MWSIZE NP3_IN
@@ -67,7 +69,7 @@ C     local input pointers
 C     Check for proper number of arguments
 
       IF (NRHS .NE. 26) THEN
-         CALL MEXERRMSGTXT('pvaws requires 18 input arguments')
+         CALL MEXERRMSGTXT('pvaws requires 19 input arguments')
       ELSEIF (NLHS .NE. 4) THEN
          CALL MEXERRMSGTXT('pvaws requires 2 output argument')
       ENDIF
@@ -89,9 +91,10 @@ C     get all the PRHS
       NCORES_IN = INT(MXGETSCALAR(PRHS(13)))
       SPMIN_IN = INT(MXGETSCALAR(PRHS(14)))
       WGHT_IN_PR = MXGETPR(PRHS(15))
-      NP1_IN = INT(MXGETSCALAR(PRHS(16)))
-      NP2_IN = INT(MXGETSCALAR(PRHS(17)))
-      NP3_IN = INT(MXGETSCALAR(PRHS(18)))
+      DLW_IN = INT(MXGETSCALAR(PRHS(16)))
+      NP1_IN = INT(MXGETSCALAR(PRHS(17)))
+      NP2_IN = INT(MXGETSCALAR(PRHS(18)))
+      NP3_IN = INT(MXGETSCALAR(PRHS(19)))
 
 C     create all the PLHS
       
@@ -103,13 +106,7 @@ C     create all the PLHS
 
 C     create all arrays for internal calculations 
 
-C     dlw = 2 * floor(hakt ./ [1, wghts]) + 1;
-      DLW1 = 2 * floor(hakt) + 1
-      DLW2 = 2 * floor(hakt / WGHT_IN_PR(1)) + 1      CORRECT?
-      DLW3 = 2 * floor(hakt / WGHT_IN_PR(2)) + 1      CORRECT?
-      DLW = DLW1 * DLW2 * DLW3
-
-      LWGHT_LOCAL = MXCREATEDOUBLEMATRIX(ONE, DWL, 0)       CORRECT? DWL UNDEFINED
+      LWGHT_LOCAL = MXCREATEDOUBLEMATRIX(ONE, DWL_IN, 0)       CORRECT? 
       SWJY_LOCAL = MXCREATEDOUBLEMATRIX(NV, NCORES_IN, 0)   CORRECT?
 
       LWGHT_LOCAL_PR = MXGETPR(LWGHT_LOCAL)

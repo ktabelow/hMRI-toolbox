@@ -27,6 +27,7 @@ function [smoothedmpmData] = hmri_calc_paws(modelCoeff, mpmData, invCov, mask, n
   while k <= kstar
 
     hakt = gethani(1, 1.25 * hmax, 2, 1.25 ^ k, wghts, 1e-4); % This function requires FORTRAN code, take from qMRI package!
+    dlw = 2 * floor(hakt ./ [1, wghts]) + 1;
 
     if k == kstar % use this for the last iteration step
 
@@ -47,6 +48,7 @@ function [smoothedmpmData] = hmri_calc_paws(modelCoeff, mpmData, invCov, mask, n
                                                mc.cores,
                                                spmin,
                                                wghts,
+                                               dlw,
                                                np1,
                                                np2,
                                                np3);
@@ -68,6 +70,7 @@ function [smoothedmpmData] = hmri_calc_paws(modelCoeff, mpmData, invCov, mask, n
                           mc.cores,
                           spmin,
                           wghts,
+                          dlw,
                           np1,
                           np2,
                           np3);

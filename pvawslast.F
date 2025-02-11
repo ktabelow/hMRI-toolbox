@@ -20,9 +20,10 @@ C                                              invcov, 14
 C                                              ncores, 15
 C                                              spmin,  16
 C                                              wght,   17
-C                                              np1,    18
-C                                              np2,    19
-C                                              np3);   20
+C                                              dlw,    18
+C                                              np1,    19
+C                                              np2,    20
+C                                              np3);   21
 
       SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
 
@@ -41,6 +42,7 @@ C     local integer variables
       MWSIZE N3_IN 
       MWSIZE NCORES_IN
       MWSIZE SPMIN_IN 
+      MWSIZE DLW_IN
       MWSIZE NP1_IN
       MWSIZE NP2_IN
       MWSIZE NP3_IN
@@ -69,7 +71,7 @@ C     local input pointers
 C     Check for proper number of arguments
 
       IF (NRHS .NE. 26) THEN
-         CALL MEXERRMSGTXT('pvawslast requires 20 input arguments')
+         CALL MEXERRMSGTXT('pvawslast requires 21 input arguments')
       ELSEIF (NLHS .NE. 4) THEN
          CALL MEXERRMSGTXT('pvawslast requires 3 output argument')
       ENDIF
@@ -93,9 +95,10 @@ C     get all the PRHS
       NCORES_IN = INT(MXGETSCALAR(PRHS(15)))
       SPMIN_IN = INT(MXGETSCALAR(PRHS(16)))
       WGHT_IN_PR = MXGETPR(PRHS(17))
-      NP1_IN = INT(MXGETSCALAR(PRHS(18)))
-      NP2_IN = INT(MXGETSCALAR(PRHS(19)))
-      NP3_IN = INT(MXGETSCALAR(PRHS(20)))
+      DLW_IN = INT(MXGETSCALAR(PRHS(18)))
+      NP1_IN = INT(MXGETSCALAR(PRHS(19)))
+      NP2_IN = INT(MXGETSCALAR(PRHS(20)))
+      NP3_IN = INT(MXGETSCALAR(PRHS(21)))
 
 C     create all the PLHS
       
@@ -108,13 +111,7 @@ C     create all the PLHS
 
 C     create all arrays for internal calculations 
 
-C     dlw = 2 * floor(hakt ./ [1, wghts]) + 1;
-      DLW1 = 2 * floor(hakt) + 1
-      DLW2 = 2 * floor(hakt / WGHT_IN_PR(1)) + 1      CORRECT?
-      DLW3 = 2 * floor(hakt / WGHT_IN_PR(2)) + 1      CORRECT?
-      DLW = DLW1 * DLW2 * DLW3
-
-      LWGHT_LOCAL = MXCREATEDOUBLEMATRIX(ONE, DWL, 0)       CORRECT? DWL UNDEFINED
+      LWGHT_LOCAL = MXCREATEDOUBLEMATRIX(ONE, DWL_IN, 0)       CORRECT?
       SWJY_LOCAL = MXCREATEDOUBLEMATRIX(NV, NCORES_IN, 0)   CORRECT?
       SWJD_LOCAL = MXCREATEDOUBLEMATRIX(NV, NCORES_IN, 0)   CORRECT?
 
