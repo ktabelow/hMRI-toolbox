@@ -3,28 +3,28 @@
 C     Gateway function pvaws 
 C     for FORTRAN subroutine pvaws2 in pcaws.f
 C     
-C     [bi, theta, hakt] = pvaws(y,         1
-C                               pos,       2
-C                               nv,        3
-C                               nvd,       4
-C                               n1,        5
-C                               n2,        6
-C                               n3,        7
-C                               hakt,      8 create space in memory for PLHS
-C                               lambda,    9
-C                               theta,    10
-C                               bi,       11
-C                               bin,      12 create space in memory for PLHS
-C                               thnew,    13 create space in memory for PLHS
-C                               invcov,   14
-C                               ncores,   15
-C                               spmin,    16
-C                               lwght,    17 create space in memory
-C                               wght,     18
-C                               swjy,     19 create space in memory
-C                               np1,      20
-C                               np2,      21
-C                               np3);     22
+C     [bi, theta] = pvaws(y,         1
+C                         pos,       2
+C                         nv,        3
+C                         nvd,       4
+C                         n1,        5
+C                         n2,        6
+C                         n3,        7
+C                         hakt,      8 
+C                         lambda,    9
+C                         theta,    10
+C                         bi,       11
+C                         bin,      12 create space in memory for PLHS
+C                         thnew,    13 create space in memory for PLHS
+C                         invcov,   14
+C                         ncores,   15
+C                         spmin,    16
+C                         lwght,    17 create space in memory
+C                         wght,     18
+C                         swjy,     19 create space in memory
+C                         np1,      20
+C                         np2,      21
+C                         np3);     22
 C
 
 

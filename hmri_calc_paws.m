@@ -31,57 +31,57 @@ function [smoothedmpmData] = hmri_calc_paws(modelCoeff, mpmData, invCov, mask, n
 
     if k == kstar % use this for the last iteration step
 
-      [bi, theta, hakt, smoothedmpmData] = pvawslast(modelCoeff,  % CALL pvawsme
-                                                     mpmData,
-                                                     position,
-                                                     nvec,
-                                                     nvec * (nvec + 1) / 2,
-                                                     nechos,
-                                                     n1,
-                                                     n2,
-                                                     n3,
-                                                     hakt = as.double(hakt), % create space in memory for PLHS
-                                                     lambda0,
-                                                     theta,
-                                                     bi,
-                                                     bi = double(nvoxel), % create space in memory for PLHS
-                                                     theta = double(nvec * nvoxel), % create space in memory for PLHS
-                                                     data = double(nechos * nvoxel), % create space in memory for PLHS
-                                                     invCov,
-                                                     mc.cores,
-                                                     spmin,
-                                                     double(prod(dlw)), % create space in memory
-                                                     wghts,
-                                                     double(nvec * mc.cores), % create space in memory
-                                                     double(nechos * mc.cores), % create space in memory
-                                                     np1,
-                                                     np2,
-                                                     np3);
+      [bi, theta, smoothedmpmData] = pvawslast(modelCoeff,  % CALL pvawsme
+                                               mpmData,
+                                               position,
+                                               nvec,
+                                               nvec * (nvec + 1) / 2,
+                                               nechos,
+                                               n1,
+                                               n2,
+                                               n3,
+                                               hakt,
+                                               lambda0,
+                                               theta,
+                                               bi,
+                                               bi = double(nvoxel), % create space in memory for PLHS
+                                               theta = double(nvec * nvoxel), % create space in memory for PLHS
+                                               data = double(nechos * nvoxel), % create space in memory for PLHS
+                                               invCov,
+                                               mc.cores,
+                                               spmin,
+                                               double(prod(dlw)), % create space in memory
+                                               wghts,
+                                               double(nvec * mc.cores), % create space in memory
+                                               double(nechos * mc.cores), % create space in memory
+                                               np1,
+                                               np2,
+                                               np3);
 
     else % use this for all but the last iteration step
 
-      [bi, theta, hakt] = pvaws(modelCoeff, % CALL pvaws2 
-                                position,
-                                nvec,
-                                nvec * (nvec + 1) / 2,
-                                n1,
-                                n2,
-                                n3,
-                                hakt = as.double(hakt), % create space in memory for PLHS
-                                lambda0,
-                                theta,
-                                bi,
-                                bi = double(nvoxel), % create space in memory for PLHS
-                                theta = double(nvec * nvoxel), % create space in memory for PLHS
-                                invCov,
-                                mc.cores,
-                                spmin,
-                                double(prod(dlw)), % create space in memory
-                                wghts,
-                                double(nvec * mc.cores), % create space in memory
-                                np1,
-                                np2,
-                                np3);
+      [bi, theta] = pvaws(modelCoeff, % CALL pvaws2 
+                          position,
+                          nvec,
+                          nvec * (nvec + 1) / 2,
+                          n1,
+                          n2,
+                          n3,
+                          hakt,
+                          lambda0,
+                          theta,
+                          bi,
+                          bi = double(nvoxel), % create space in memory for PLHS
+                          theta = double(nvec * nvoxel), % create space in memory for PLHS
+                          invCov,
+                          mc.cores,
+                          spmin,
+                          double(prod(dlw)), % create space in memory
+                          wghts,
+                          double(nvec * mc.cores), % create space in memory
+                          np1,
+                          np2,
+                          np3);
 
     end
   

@@ -3,32 +3,32 @@
 C     Gateway function for subroutine pvawsme in pcaws.f
 C     for FORTRAN subroutine pvawsme in pcaws.f
 C     
-C     [bi, theta, hakt, smoothedmpmData] = pvawslast(y,       1
-C                                                    yd,      2
-C                                                    pos,     3
-C                                                    nv,      4
-C                                                    nvd,     5
-C                                                    nd,      6
-C                                                    n1,      7
-C                                                    n2,      8
-C                                                    n3,      9
-C                                                    hakt,   10 create space in memory for PLHS
-C                                                    lambda, 11
-C                                                    theta,  12
-C                                                    bi,     13
-C                                                    bin,    14 create space in memory for PLHS
-C                                                    thnew,  15 create space in memory for PLHS
-C                                                    ydnew,  16 create space in memory for PLHS
-C                                                    invcov, 17
-C                                                    ncores, 18
-C                                                    spmin,  19
-C                                                    lwght,  20 create space in memory
-C                                                    wght,   21
-C                                                    swjy,   22 create space in memory
-C                                                    swjd,   23 create space in memory
-C                                                    np1,    24
-C                                                    np2,    25
-C                                                    np3);   26
+C     [bi, theta, smoothedmpmData] = pvawslast(y,       1
+C                                              yd,      2
+C                                              pos,     3
+C                                              nv,      4
+C                                              nvd,     5
+C                                              nd,      6
+C                                              n1,      7
+C                                              n2,      8
+C                                              n3,      9
+C                                              hakt,   10 
+C                                              lambda, 11
+C                                              theta,  12
+C                                              bi,     13
+C                                              bin,    14 create space in memory for PLHS
+C                                              thnew,  15 create space in memory for PLHS
+C                                              ydnew,  16 create space in memory for PLHS
+C                                              invcov, 17
+C                                              ncores, 18
+C                                              spmin,  19
+C                                              lwght,  20 create space in memory
+C                                              wght,   21
+C                                              swjy,   22 create space in memory
+C                                              swjd,   23 create space in memory
+C                                              np1,    24
+C                                              np2,    25
+C                                              np3);   26
 
       SUBROUTINE MEXFUNCTION(NLHS, PLHS, NRHS, PRHS)
 
