@@ -25,429 +25,378 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
 
+#include <stdio.h>
+#include <math.h>
+#include <stdbool.h>
+
+// External functions
+extern double lkern(int, double);
+extern double KLdistsi(double*, double*, double*, int);
+
+void pvaws2(double *y, double *pos, int nv, int nvd, int n1, int n2, int n3, 
+            double hakt, double lambda, double *theta, double *bi, double *bin, 
+            double *thnew, double *invcov, int ncores, double spmin, double *lwght, 
+            double *wght, double *swjy, int np1, int np2, int np3) {
+
+    int ih1, ih2, ih3, i1, i2, i3, j1, j2, j3, jw1, jw2, jw3, jwind3, jwind2;
+    int iind, jind, jind3, jind2, clw1, clw2, clw3, dlw1, dlw2, dlw3, dlw12, n12, k, thrednr, iindp, jindp, ipindp, jpindp;
+    double sij, swj, z1, z2, z3, wj, hakt2, w1, w2, sijp;
+    int np1, np2, np3;
+    int ip1, ip2, ip3, nph1, nph2, nph3, ipind, jp1, jp2, jp3, jpind;
+    bool aws;
+    double spf;
+
+    thrednr = 1;
+    hakt2 = hakt * hakt;
+    spf = 1.0 / (1.0 - spmin);
+    ih1 = floor(hakt);
+    aws = lambda < 1e35;
+
+    // First calculate location weights
+    w1 = wght[0];
+    w2 = wght[1];
+    ih3 = floor(hakt / w2);
+    ih2 = floor(hakt / w1);
+    ih1 = floor(hakt);
+    if (n3 == 1) ih3 = 0;
+    if (n2 == 1) ih2 = 0;
+    clw1 = ih1;
+    clw2 = ih2;
+    clw3 = ih3;
+    dlw1 = ih1 + clw1 + 1;
+    dlw2 = ih2 + clw2 + 1;
+    dlw3 = ih3 + clw3 + 1;
+    dlw12 = dlw1 * dlw2;
+    nph1 = (np1 - 1) / 2;
+    nph2 = (np2 - 1) / 2;
+    nph3 = (np3 - 1) / 2;
+    n12 = n1 * n2;
+    z2 = 0.0;
+    z3 = 0.0;
+
+    for (j3 = -clw3; j3 <= clw3; j3++) {
+        if (n3 > 1) {
+            z3 = j3 * w2;
+            z3 = z3 * z3;
+            ih2 = floor(sqrt(hakt2 - z3) / w1);
+            jind3 = (j3 + clw3) * dlw12;
+        } else {
+            jind3 = 0;
+        }
+        for (j2 = -ih2; j2 <= ih2; j2++) {
+            if (n2 > 1) {
+                z2 = j2 * w1;
+                z2 = z3 + z2 * z2;
+                ih1 = floor(sqrt(hakt2 - z2));
+                jind2 = jind3 + (j2 + clw2) * dlw1;
+            } else {
+                jind2 = 0;
+            }
+            for (j1 = -ih1; j1 <= ih1; j1++) {
+                jind = j1 + clw1 + 1 + jind2;
+                z1 = j1;
+                lwght[jind] = lkern(2, (z1 * z1 + z2) / hakt2);
+            }
+        }
+    }
+
+    // Rescale bi with 1/lambda
+    for (iind = 0; iind < n1 * n2 * n3; iind++) {
+        iindp = pos[iind];
+        if (iindp == 0) continue;
+        bi[iindp] = bi[iindp] / lambda;
+    }
+
+    // Call to rchkusr() - assuming it's a placeholder for some user-defined function
+    // rchkusr();
+
+    for (iind = 0; iind < n1 * n2 * n3; iind++) {
+        iindp = pos[iind];
+        if (iindp == 0) continue;
+
+        i1 = iind % n1;
+        if (i1 == 0) i1 = n1;
+        i2 = (iind - i1) / n1 + 1;
+        if (i2 == 0) i2 = n2;
+        i3 = (iind - i1 - (i2 - 1) * n1) / n12 + 1;
+
+        swj = 0.0;
+        for (k = 0; k < nv; k++) {
+            swjy[k * ncores + thrednr] = 0.0;
+        }
+
+        for (jw3 = -clw3; jw3 <= clw3; jw3++) {
+            j3 = jw3 + i3;
+            if (j3 < 1 || j3 > n3) continue;
+            jwind3 = (jw3 + clw3) * dlw12;
+            jind3 = (j3 - 1) * n12;
+            z3 = jw3 * w2;
+            z3 = z3 * z3;
+            if (n2 > 1) ih2 = floor(sqrt(hakt2 - z3) / w1);
+            for (jw2 = -ih2; jw2 <= ih2; jw2++) {
+                j2 = jw2 + i2;
+                if (j2 < 1 || j2 > n2) continue;
+                jwind2 = jwind3 + (jw2 + clw2) * dlw1;
+                jind2 = (j2 - 1) * n1 + jind3;
+                z2 = jw2 * w1;
+                z2 = z3 + z2 * z2;
+                ih1 = floor(sqrt(hakt2 - z2));
+                for (jw1 = -ih1; jw1 <= ih1; jw1++) {
+                    j1 = jw1 + i1;
+                    if (j1 < 1 || j1 > n1) continue;
+                    jind = j1 + jind2;
+                    jindp = pos[jind];
+                    if (jindp == 0) continue;
+                    wj = lwght[jw1 + clw1 + 1 + jwind2];
+                    if (aws) {
+                        sij = 0.0;
+                        for (ip1 = i1 - nph1; ip1 <= i1 + nph1; ip1++) {
+                            if (ip1 <= 0 || ip1 > n1) continue;
+                            jp1 = ip1 + jw1;
+                            if (jp1 <= 0 || jp1 > n1) continue;
+                            for (ip2 = i2 - nph2; ip2 <= i2 + nph2; ip2++) {
+                                if (ip2 <= 0 || ip2 > n2) continue;
+                                jp2 = ip2 + jw2;
+                                if (jp2 <= 0 || jp2 > n2) continue;
+                                for (ip3 = i3 - nph3; ip3 <= i3 + nph3; ip3++) {
+                                    if (sij > 1.0) continue;
+                                    if (ip3 <= 0 || ip3 > n3) continue;
+                                    ipind = ip1 + (ip2 - 1) * n1 + (ip3 - 1) * n12;
+                                    ipindp = pos[ipind];
+                                    if (ipindp == 0) continue;
+                                    jp3 = ip3 + jw3;
+                                    if (jp3 <= 0 || jp3 > n3) continue;
+                                    jpind = jp1 + (jp2 - 1) * n1 + (jp3 - 1) * n12;
+                                    jpindp = pos[jpind];
+                                    if (jpindp == 0) continue;
+                                    sijp = KLdistsi(&theta[jpindp * nv], &theta[ipindp * nv], &invcov[ipindp * nvd], nv);
+                                    sij = fmax(sij, bi[ipindp] * sijp);
+                                }
+                            }
+                        }
+                        if (sij >= 1.0) continue;
+                        if (sij > spmin) wj = wj * (1.0 - spf * (sij - spmin));
+                    }
+                    swj += wj;
+                    for (k = 0; k < nv; k++) {
+                        swjy[k * ncores + thrednr] += wj * y[k * ncores + jindp];
+                    }
+                }
+            }
+        }
+        for (k = 0; k < nv; k++) {
+            thnew[k * ncores + iindp] = swjy[k * ncores + thrednr] / swj;
+        }
+        bin[iindp] = swj;
+    }
+}
 
 
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C
-C   Perform one iteration in local constant three-variate aws (gridded)
-C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine pvaws2(y,pos,nv,nvd,n1,n2,n3,hakt,lambda,theta,bi,
-     1                bin,thnew,invcov,ncores,spmin,lwght,wght,swjy,
-     2                np1,np2,np3)
-C
-C   y        observed values of regression function
-C   n1,n2,n3    design dimensions
-C   hakt     actual bandwidth
-C   lambda   lambda or lambda*sigma2 for Gaussian models
-C   theta    estimates from last step   (input)
-C   bi       \sum  Wi   (output)
-C   thnew    \sum  Wi Y / bi     (output)
-C   wght     scaling factor for second and third dimension (larger values shrink)
-C
-      implicit none
+void pvawsme(double *y, double *yd, double *pos, int nv, int nvd, int nd, int n1, int n2, int n3, 
+             double hakt, double lambda, double *theta, double *bi, double *bin, double *thnew, 
+             double *ydnew, double *invcov, int ncores, double spmin, double *lwght, double *wght, 
+             double *swjy, double *swjd, int np1, int np2, int np3) {
 
-      integer nv,n1,n2,n3,ncores,nvd,pos(*)
-      logical aws
-      double precision y(nv,*),theta(nv,*),bi(*),thnew(nv,*),lambda,
-     1  wght(2),hakt,lwght(*),spmin,spf,swjy(nv,ncores),invcov(nvd,*),
-     2  bin(*)
-      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
-     1        iind,jind,jind3,jind2,clw1,clw2,clw3,dlw1,dlw2,dlw3,
-     2        dlw12,n12,k,thrednr,iindp,jindp,ipindp,jpindp
-      double precision sij,swj,z1,z2,z3,wj,hakt2,w1,w2,sijp
-      integer np1,np2,np3
-      integer ip1,ip2,ip3,nph1,nph2,nph3,ipind,jp1,jp2,jp3,jpind
-      external lkern, KLdistsi
-      double precision lkern, KLdistsi
+    int ih1, ih2, ih3, i1, i2, i3, j1, j2, j3, jw1, jw2, jw3, jwind3, jwind2;
+    int iind, jind, jind3, jind2, clw1, clw2, clw3, dlw1, dlw2, dlw3, dlw12, n12, k, thrednr, iindp, jindp, ipindp, jpindp;
+    double sij, swj, z1, z2, z3, wj, hakt2, w1, w2, sijp;
+    int np1, np2, np3;
+    int ip1, ip2, ip3, nph1, nph2, nph3, ipind, jp1, jp2, jp3, jpind;
+    bool aws;
+    double spf;
 
+    thrednr = 1;
+    hakt2 = hakt * hakt;
+    spf = 1.0 / (1.0 - spmin);
+    ih1 = floor(hakt);
+    aws = lambda < 1e35;
 
-      
-      thrednr = 1
-C just to prevent a compiler warning
-      hakt2=hakt*hakt
-      spf=1.d0/(1.d0-spmin)
-      ih1=FLOOR(hakt)
-      aws=lambda.lt.1d35
-C
-C   first calculate location weights
-C
-      w1=wght(1)
-      w2=wght(2)
-      ih3=FLOOR(hakt/w2)
-      ih2=FLOOR(hakt/w1)
-      ih1=FLOOR(hakt)
-      if(n3.eq.1) ih3=0
-      if(n2.eq.1) ih2=0
-      clw1=ih1
-      clw2=ih2
-      clw3=ih3
-      dlw1=ih1+clw1+1
-      dlw2=ih2+clw2+1
-      dlw3=ih3+clw3+1
-      dlw12=dlw1*dlw2
-      nph1=(np1-1)/2
-      nph2=(np2-1)/2
-      nph3=(np3-1)/2
-      n12=n1*n2
-      z2=0.d0
-      z3=0.d0
-      DO j3=-clw3,clw3
-         if(n3.gt.1) THEN
-            z3=j3*w2
-            z3=z3*z3
-            ih2=FLOOR(sqrt(hakt2-z3)/w1)
-            jind3=(j3+clw3)*dlw12
-         ELSE
-            jind3=0
-         END IF
-         DO j2=-ih2,ih2
-            if(n2.gt.1) THEN
-               z2=j2*w1
-               z2=z3+z2*z2
-               ih1=FLOOR(sqrt(hakt2-z2))
-               jind2=jind3+(j2+clw2)*dlw1
-            ELSE
-               jind2=0
-            END IF
-            DO j1=-ih1,ih1
-C  first stochastic term
-               jind=j1+clw1+1+jind2
-               z1=j1
-               lwght(jind)=lkern(2,(z1*z1+z2)/hakt2)
-            END DO
-         END DO
-      END DO
-C   rescale bi with 1/lambda
-      DO iind=1,n1*n2*n3
-        iindp=pos(iind)
-        if(iindp.eq.0) CYCLE
-        bi(iindp) = bi(iindp)/lambda
-      END DO
-      call rchkusr()
-      DO iind=1,n1*n2*n3
-         iindp=pos(iind)
-         if(iindp.eq.0) CYCLE
-C returns value in 0:(ncores-1)
-         i1=mod(iind,n1)
-         if(i1.eq.0) i1=n1
-         i2=mod((iind-i1)/n1+1,n2)
-         if(i2.eq.0) i2=n2
-         i3=(iind-i1-(i2-1)*n1)/n12+1
-C   scaling of sij outside the loop
-         swj=0.d0
-         DO k=1,nv
-            swjy(k,thrednr)=0.d0
-         END DO
-         DO jw3=-clw3,clw3
-            j3=jw3+i3
-            if(j3.lt.1.or.j3.gt.n3) CYCLE
-            jwind3=(jw3+clw3)*dlw12
-            jind3=(j3-1)*n12
-            z3=jw3*w2
-            z3=z3*z3
-            if(n2.gt.1) ih2=FLOOR(sqrt(hakt2-z3)/w1)
-            DO jw2=-ih2,ih2
-               j2=jw2+i2
-               if(j2.lt.1.or.j2.gt.n2) CYCLE
-               jwind2=jwind3+(jw2+clw2)*dlw1
-               jind2=(j2-1)*n1+jind3
-               z2=jw2*w1
-               z2=z3+z2*z2
-               ih1=FLOOR(sqrt(hakt2-z2))
-               DO jw1=-ih1,ih1
-C  first stochastic term
-                  j1=jw1+i1
-                  if(j1.lt.1.or.j1.gt.n1) CYCLE
-                  jind=j1+jind2
-                  jindp=pos(jind)
-                  if(jindp.eq.0) CYCLE
-                  wj=lwght(jw1+clw1+1+jwind2)
-                  IF (aws) THEN
-                     sij=0.d0
-                     DO ip1=i1-nph1,i1+nph1
-                        if(ip1.le.0.or.ip1.gt.n1) CYCLE
-                        jp1=ip1+jw1
-                        if(jp1.le.0.or.jp1.gt.n1) CYCLE
-                        DO ip2=i2-nph2,i2+nph2
-                           if(ip2.le.0.or.ip2.gt.n2) CYCLE
-                           jp2=ip2+jw2
-                           if(jp2.le.0.or.jp2.gt.n2) CYCLE
-                           DO ip3=i3-nph3,i3+nph3
-                              if(sij.gt.1.d0) CYCLE
-                              if(ip3.le.0.or.ip3.gt.n3) CYCLE
-                              ipind=ip1+(ip2-1)*n1+(ip3-1)*n12
-                              ipindp=pos(ipind)
-                              if(ipindp.eq.0) CYCLE
-                              jp3=ip3+jw3
-                              if(jp3.le.0.or.jp3.gt.n3) CYCLE
-                              jpind=jp1+(jp2-1)*n1+(jp3-1)*n12
-                              jpindp=pos(jpind)
-                              if(jpindp.eq.0) CYCLE
-C   need both ipind and jpind in mask,
-                              sijp=KLdistsi(theta(1,jpindp),
-     1                                theta(1,ipindp),
-     2                                invcov(1,ipindp),nv)
-                              sij=max(sij,bi(ipindp)*sijp)
-                           END DO
-                        END DO
-                     END DO
-                     IF (sij.ge.1.d0) CYCLE
-                     IF (sij.gt.spmin) wj=wj*(1.d0-spf*(sij-spmin))
-                  END IF
-                  swj=swj+wj
-                  DO k=1,nv
-                     swjy(k,thrednr)=swjy(k,thrednr)+wj*y(k,jindp)
-                  END DO
-               END DO
-            END DO
-         END DO
-         DO k=1,nv
-            thnew(k,iindp)=swjy(k,thrednr)/swj
-         END DO
-         bin(iindp)=swj
-      END DO
-      RETURN
-      END
-C     end of subroutine pvaws2
+    // First calculate location weights
+    w1 = wght[0];
+    w2 = wght[1];
+    ih3 = floor(hakt / w2);
+    ih2 = floor(hakt / w1);
+    ih1 = floor(hakt);
+    if (n3 == 1) ih3 = 0;
+    if (n2 == 1) ih2 = 0;
+    clw1 = ih1;
+    clw2 = ih2;
+    clw3 = ih3;
+    dlw1 = ih1 + clw1 + 1;
+    dlw2 = ih2 + clw2 + 1;
+    dlw3 = ih3 + clw3 + 1;
+    dlw12 = dlw1 * dlw2;
+    nph1 = (np1 - 1) / 2;
+    nph2 = (np2 - 1) / 2;
+    nph3 = (np3 - 1) / 2;
+    n12 = n1 * n2;
+    z2 = 0.0;
+    z3 = 0.0;
+
+    for (j3 = -clw3; j3 <= clw3; j3++) {
+        if (n3 > 1) {
+            z3 = j3 * w2;
+            z3 = z3 * z3;
+            ih2 = floor(sqrt(hakt2 - z3) / w1);
+            jind3 = (j3 + clw3) * dlw12;
+        } else {
+            jind3 = 0;
+        }
+        for (j2 = -ih2; j2 <= ih2; j2++) {
+            if (n2 > 1) {
+                z2 = j2 * w1;
+                z2 = z3 + z2 * z2;
+                ih1 = floor(sqrt(hakt2 - z2));
+                jind2 = jind3 + (j2 + clw2) * dlw1;
+            } else {
+                jind2 = 0;
+            }
+            for (j1 = -ih1; j1 <= ih1; j1++) {
+                jind = j1 + clw1 + 1 + jind2;
+                z1 = j1;
+                lwght[jind] = lkern(2, (z1 * z1 + z2) / hakt2);
+            }
+        }
+    }
+
+    // Rescale bi with 1/lambda
+    for (iind = 0; iind < n1 * n2 * n3; iind++) {
+        iindp = pos[iind];
+        if (iindp == 0) continue;
+        bi[iindp] = bi[iindp] / lambda;
+    }
+
+    // Call to rchkusr() - assuming it's a placeholder for some user-defined function
+    // rchkusr();
+
+    for (iind = 0; iind < n1 * n2 * n3; iind++) {
+        iindp = pos[iind];
+        if (iindp == 0) continue;
+
+        i1 = iind % n1;
+        if (i1 == 0) i1 = n1;
+        i2 = (iind - i1) / n1 + 1;
+        if (i2 == 0) i2 = n2;
+        i3 = (iind - i1 - (i2 - 1) * n1) / n12 + 1;
+
+        swj = 0.0;
+        for (k = 0; k < nv; k++) {
+            swjy[k * ncores + thrednr] = 0.0;
+        }
+        for (k = 0; k < nd; k++) {
+            swjd[k * ncores + thrednr] = 0.0;
+        }
+
+        for (jw3 = -clw3; jw3 <= clw3; jw3++) {
+            j3 = jw3 + i3;
+            if (j3 < 1 || j3 > n3) continue;
+            jwind3 = (jw3 + clw3) * dlw12;
+            jind3 = (j3 - 1) * n12;
+            z3 = jw3 * w2;
+            z3 = z3 * z3;
+            if (n2 > 1) ih2 = floor(sqrt(hakt2 - z3) / w1);
+            for (jw2 = -ih2; jw2 <= ih2; jw2++) {
+                j2 = jw2 + i2;
+                if (j2 < 1 || j2 > n2) continue;
+                jwind2 = jwind3 + (jw2 + clw2) * dlw1;
+                jind2 = (j2 - 1) * n1 + jind3;
+                z2 = jw2 * w1;
+                z2 = z3 + z2 * z2;
+                ih1 = floor(sqrt(hakt2 - z2));
+                for (jw1 = -ih1; jw1 <= ih1; jw1++) {
+                    j1 = jw1 + i1;
+                    if (j1 < 1 || j1 > n1) continue;
+                    jind = j1 + jind2;
+                    jindp = pos[jind];
+                    if (jindp == 0) continue;
+                    wj = lwght[jw1 + clw1 + 1 + jwind2];
+                    if (aws) {
+                        sij = 0.0;
+                        for (ip1 = i1 - nph1; ip1 <= i1 + nph1; ip1++) {
+                            if (ip1 <= 0 || ip1 > n1) continue;
+                            jp1 = ip1 + jw1;
+                            if (jp1 <= 0 || jp1 > n1) continue;
+                            for (ip2 = i2 - nph2; ip2 <= i2 + nph2; ip2++) {
+                                if (ip2 <= 0 || ip2 > n2) continue;
+                                jp2 = ip2 + jw2;
+                                if (jp2 <= 0 || jp2 > n2) continue;
+                                for (ip3 = i3 - nph3; ip3 <= i3 + nph3; ip3++) {
+                                    if (sij > 1.0) continue;
+                                    if (ip3 <= 0 || ip3 > n3) continue;
+                                    ipind = ip1 + (ip2 - 1) * n1 + (ip3 - 1) * n12;
+                                    ipindp = pos[ipind];
+                                    if (ipindp == 0) continue;
+                                    jp3 = ip3 + jw3;
+                                    if (jp3 <= 0 || jp3 > n3) continue;
+                                    jpind = jp1 + (jp2 - 1) * n1 + (jp3 - 1) * n12;
+                                    jpindp = pos[jpind];
+                                    if (jpindp == 0) continue;
+                                    sijp = KLdistsi(&theta[jpindp * nv], &theta[ipindp * nv], &invcov[ipindp * nvd], nv);
+                                    sij = fmax(sij, bi[ipindp] * sijp);
+                                }
+                            }
+                        }
+                        if (sij >= 1.0) continue;
+                        if (sij > spmin) wj = wj * (1.0 - spf * (sij - spmin));
+                    }
+                    swj += wj;
+                    for (k = 0; k < nv; k++) {
+                        swjy[k * ncores + thrednr] += wj * y[k * ncores + jindp];
+                    }
+                    for (k = 0; k < nd; k++) {
+                        swjd[k * ncores + thrednr] += wj * yd[k * ncores + jindp];
+                    }
+                }
+            }
+        }
+        for (k = 0; k < nv; k++) {
+            thnew[k * ncores + iindp] = swjy[k * ncores + thrednr] / swj;
+        }
+        for (k = 0; k < nd; k++) {
+            ydnew[k * ncores + iindp] = swjd[k * ncores + thrednr] / swj;
+        }
+        bin[iindp] = swj;
+    }
+}
 
 
+double KLdistsr(double *thi, double *thj, double *si2, int nv) {
+    double z = 0.0;
+    double zdk;
+    int k, l, m = 0;
 
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C
-C   Perform last iteration step in local constant three-variate aws (gridded)
-C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine pvawsme(y,yd,pos,nv,nvd,nd,n1,n2,n3,hakt,lambda,
-     1                theta,bi,bin,thnew,ydnew,invcov,ncores,spmin,
-     2                lwght,wght,swjy,swjd,np1,np2,np3)
-C
-C   y        observed values of regression function
-C   n1,n2,n3    design dimensions
-C   hakt     actual bandwidth
-C   lambda   lambda or lambda*sigma2 for Gaussian models
-C   theta    estimates from last step   (input)
-C   bi       \sum  Wi   (output)
-C   thnew    \sum  Wi Y / bi     (output)
-C   wght     scaling factor for second and third dimension (larger values shrink)
-C
-      implicit none
+    for (k = 0; k < nv; k++) {
+        zdk = thi[k] - thj[k];
+        if (k > 0) {
+            for (l = 0; l < k; l++) {
+                z += 2.0 * (thi[l] - thj[l]) * zdk * si2[m];
+                m++;
+            }
+        }
+        z += zdk * zdk * si2[m];
+        m++;
+    }
 
-      integer nv,n1,n2,n3,ncores,nvd,nd,pos(*)
-      logical aws
-      double precision y(nv,*),theta(nv,*),bi(*),thnew(nv,*),lambda,
-     1  wght(2),hakt,lwght(*),spmin,spf,swjy(nv,ncores),invcov(nvd,*),
-     2  bin(*),yd(nd,*),swjd(nd,ncores),ydnew(nd,*)
-      integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
-     1        iind,jind,jind3,jind2,clw1,clw2,clw3,dlw1,dlw2,dlw3,
-     2        dlw12,n12,k,iindp,jindp,ipindp,jpindp,thrednr
-      double precision sij,swj,z1,z2,z3,wj,hakt2,w1,w2,sijp
-      integer np1,np2,np3
-      integer ip1,ip2,ip3,nph1,nph2,nph3,ipind,jp1,jp2,jp3,jpind
-      external lkern, KLdistsr
-      double precision lkern, KLdistsr
+    return z;
+}
 
+double KLdistsi(double *thi, double *thj, double *si2, int nv) {
+    double z = 0.0;
+    double zdk;
+    int k, l, m = 0;
 
-      thrednr = 1
-C just to prevent a compiler warning
-      hakt2=hakt*hakt
-      spf=1.d0/(1.d0-spmin)
-      ih1=FLOOR(hakt)
-      aws=lambda.lt.1d35
-C
-C   first calculate location weights
-C
-      w1=wght(1)
-      w2=wght(2)
-      ih3=FLOOR(hakt/w2)
-      ih2=FLOOR(hakt/w1)
-      ih1=FLOOR(hakt)
-      if(n3.eq.1) ih3=0
-      if(n2.eq.1) ih2=0
-      clw1=ih1
-      clw2=ih2
-      clw3=ih3
-      dlw1=ih1+clw1+1
-      dlw2=ih2+clw2+1
-      dlw3=ih3+clw3+1
-      dlw12=dlw1*dlw2
-      nph1=(np1-1)/2
-      nph2=(np2-1)/2
-      nph3=(np3-1)/2
-      n12=n1*n2
-      z2=0.d0
-      z3=0.d0
-      DO j3=-clw3,clw3
-        if(n3.gt.1) THEN
-          z3=j3*w2
-          z3=z3*z3
-          ih2=FLOOR(sqrt(hakt2-z3)/w1)
-          jind3=(j3+clw3)*dlw12
-        ELSE
-          jind3=0
-        END IF
-        DO j2=-ih2,ih2
-        if(n2.gt.1) THEN
-          z2=j2*w1
-          z2=z3+z2*z2
-          ih1=FLOOR(sqrt(hakt2-z2))
-          jind2=jind3+(j2+clw2)*dlw1
-        ELSE
-          jind2=0
-        END IF
-          DO j1=-ih1,ih1
-C  first stochastic term
-            jind=j1+clw1+1+jind2
-            z1=j1
-            lwght(jind)=lkern(2,(z1*z1+z2)/hakt2)
-          END DO
-        END DO
-      END DO
-      call rchkusr()
-      DO iind=1,n1*n2*n3
-        iindp = pos(iind)
-        if(iindp.eq.0) CYCLE
-C returns value in 0:(ncores-1)
-        i1=mod(iind,n1)
-        if(i1.eq.0) i1=n1
-        i2=mod((iind-i1)/n1+1,n2)
-        if(i2.eq.0) i2=n2
-        i3=(iind-i1-(i2-1)*n1)/n12+1
-C   scaling of sij outside the loop
-        swj=0.d0
-        DO k=1,nv
-          swjy(k,thrednr)=0.d0
-        END DO
-        DO k=1,nd
-          swjd(k,thrednr)=0.d0
-        END DO
-        DO jw3=-clw3,clw3
-          j3=jw3+i3
-          if(j3.lt.1.or.j3.gt.n3) CYCLE
-          jwind3=(jw3+clw3)*dlw12
-          jind3=(j3-1)*n12
-          z3=jw3*w2
-          z3=z3*z3
-          if(n2.gt.1) ih2=FLOOR(sqrt(hakt2-z3)/w1)
-          DO jw2=-ih2,ih2
-            j2=jw2+i2
-            if(j2.lt.1.or.j2.gt.n2) CYCLE
-            jwind2=jwind3+(jw2+clw2)*dlw1
-            jind2=(j2-1)*n1+jind3
-            z2=jw2*w1
-            z2=z3+z2*z2
-            ih1=FLOOR(sqrt(hakt2-z2))
-            DO jw1=-ih1,ih1
-C  first stochastic term
-              j1=jw1+i1
-              if(j1.lt.1.or.j1.gt.n1) CYCLE
-              jind=j1+jind2
-              jindp=pos(jind)
-              if(jindp.eq.0) CYCLE
-              wj=lwght(jw1+clw1+1+jwind2)
-              IF (aws) THEN
-                sij=0.d0
-                DO ip1=i1-nph1,i1+nph1
-                  if(ip1.le.0.or.ip1.gt.n1) CYCLE
-                  jp1=ip1+jw1
-                  DO ip2=i2-nph2,i2+nph2
-                     if(ip2.le.0.or.ip2.gt.n2) CYCLE
-                     jp2=ip2+jw2
-                     DO ip3=i3-nph3,i3+nph3
-                        if(sij.gt.1.d0) CYCLE
-                        if(ip3.le.0.or.ip3.gt.n3) CYCLE
-                        ipind=ip1+(ip2-1)*n1+(ip3-1)*n1*n2
-                        ipindp=pos(ipind)
-                        if(ipindp.eq.0) CYCLE
-                        jp3=ip3+jw3
-                        if(jp1.le.0.or.jp1.gt.n1) CYCLE
-                        if(jp2.le.0.or.jp2.gt.n2) CYCLE
-                        if(jp3.le.0.or.jp3.gt.n3) CYCLE
-                        jpind=jp1+(jp2-1)*n1+(jp3-1)*n12
-                        jpindp=pos(jpind)
-                        if(jpindp.eq.0) CYCLE
-C   need both ipind and jpind in mask,
-                        sijp=KLdistsr(theta(1,jpindp),
-     1                                theta(1,ipindp),
-     2                                invcov(1,ipindp),nv)
-                        sij=max(sij,bi(ipindp)/lambda*sijp)
-                     END DO
-                  END DO
-                END DO
-                IF (sij.ge.1.d0) CYCLE
-                IF (sij.gt.spmin) wj=wj*(1.d0-spf*(sij-spmin))
-              END IF
-              swj=swj+wj
-              DO k=1,nv
-                swjy(k,thrednr)=swjy(k,thrednr)+wj*y(k,jindp)
-              END DO
-              DO k=1,nd
-                swjd(k,thrednr)=swjd(k,thrednr)+wj*yd(k,jindp)
-              END DO
-            END DO
-          END DO
-        END DO
-        DO k=1,nv
-          thnew(k,iindp)=swjy(k,thrednr)/swj
-        END DO
-        DO k=1,nd
-          ydnew(k,iindp)=swjd(k,thrednr)/swj
-        END DO
-        bin(iindp)=swj
-      END DO
-      RETURN
-      END
-C     end of subroutine pvawsme
+    for (k = 0; k < nv; k++) {
+        zdk = thi[k] - thj[k];
+        if (k > 0) {
+            for (l = 0; l < k; l++) {
+                z += 2.0 * (thi[l] - thj[l]) * zdk * si2[m];
+                m++;
+            }
+        }
+        z += zdk * zdk * si2[m];
+        m++;
+    }
 
+    return z;
+}
 
-
-
-      double precision function KLdistsr(thi,thj,si2,nv)
-      implicit logical (a-z)
-      integer nv
-      double precision thi(nv), thj(nv), si2(*)
-      integer k,l,m
-      double precision z,zdk
-      z=0.d0
-      m=1
-      DO k=1,nv
-        zdk=thi(k)-thj(k)
-        if(k.gt.1) THEN
-          DO l=1,k-1
-            z=z+2.d0*(thi(l)-thj(l))*zdk*si2(m)
-            m=m+1
-          END DO
-        ENDIF
-        z=z+zdk*zdk*si2(m)
-        m=m+1
-      END DO
-      KLdistsr=z
-      RETURN
-      END
-
-
-      double precision function KLdistsi(thi,thj,si2,nv)
-C  compact version
-      implicit logical (a-z)
-      integer nv
-      double precision thi(nv), thj(nv), si2(*)
-      integer k,l,m
-      double precision z,zdk
-      z=0.d0
-      m=1
-      DO k=1,nv
-         zdk=thi(k)-thj(k)
-         if(k.gt.1) THEN
-           DO l=1,k-1
-              z=z+2.d0*(thi(l)-thj(l))*zdk*si2(m)
-              m=m+1
-           END DO
-         ENDIF
-         z=z+zdk*zdk*si2(m)
-         m=m+1
-      END DO
-      KLdistsi=z
-      RETURN
-      END
-
-   
