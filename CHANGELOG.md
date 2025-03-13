@@ -12,6 +12,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - update FIL seste seq parameters in get_metadata_val_classic
 - denoising module-first part: Java-Matlab interface for LCPCA denoising
 - read EffectiveEchoTime in new TerraX Dicom format
+- save LCPCA-denoising supplementary files as nifti instead of .mat
 - parameter error maps
 - robust combination of two runs using error maps
 
@@ -23,6 +24,8 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - Modify the filenames as files are copied to RFsensCalc to prevent overwriting in further processing
 - batch interface now enforces the number of B1 input images correctly for B1 mapping methods which only need two images
 - more informative error if optimization toolbox not present during NLLS R2* calculation
+- fix 3D-EPI B1 mapping not using b1defaults for Triotim scanner
+- use cell- instead of char- array to accommodate filenames of unequal length in RFsens
 
 ## [v0.6.1]
 ### Fixed
