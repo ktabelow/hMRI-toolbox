@@ -33,11 +33,30 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 extern double lkern(int, double);
 extern double KLdistsi(double*, double*, double*, int);
 
-void pvaws2(double *y, double *pos, int nv, int nvd, int n1, int n2, int n3, 
-            double hakt, double lambda, double *theta, double *bi, double *bin, 
-            double *thnew, double *invcov, int ncores, double spmin, double *lwght, 
-            double *wght, double *swjy, int np1, int np2, int np3) {
-
+void pvaws(
+    double *y,
+    double *pos,
+    int nv,
+    int nvd,
+    int n1,
+    int n2,
+    int n3,
+    double hakt,
+    double lambda,
+    double *theta,
+    double *bi,
+    double *bin,
+    double *thnew,
+    double *invcov,
+    int ncores,
+    double spmin,
+    double *lwght,
+    double *wght,
+    double *swjy,
+    int np1,
+    int np2,
+    int np3
+) {
     int ih1, ih2, ih3, i1, i2, i3, j1, j2, j3, jw1, jw2, jw3, jwind3, jwind2;
     int iind, jind, jind3, jind2, clw1, clw2, clw3, dlw1, dlw2, dlw3, dlw12, n12, k, thrednr, iindp, jindp, ipindp, jpindp;
     double sij, swj, z1, z2, z3, wj, hakt2, w1, w2, sijp;

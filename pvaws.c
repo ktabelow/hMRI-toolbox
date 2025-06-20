@@ -110,28 +110,30 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // Call the actual C function 'pvaws2' which performs the main computation for the pvaws algorithm.
     // This function processes the input data and computes the outputs 'BI_OUT_PR' and 'THNEW_OUT_PR'.
 
-    pvaws2(Y_IN_PR,
-           POS_IN_PR,
-           NV_IN,
-           NVD_IN,
-           N1_IN,
-           N2_IN,
-           N3_IN,
-           HAKT_IN,
-           LAMBDA_IN,
-           THETA_IN_PR,
-           BI_IN_PR,
-           BI_OUT_PR,
-           THNEW_OUT_PR,
-           INVCOV_IN_PR,
-           NCORES_IN,
-           SPMIN_IN,
-           LWGHT_LOCAL_PR,
-           WGHT_IN_PR,
-           SWJY_LOCAL_PR,
-           NP1_IN,
-           NP2_IN,
-           NP3_IN);
+    pvaws(
+        Y_IN_PR,
+        POS_IN_PR,
+        NV_IN,
+        NVD_IN,
+        N1_IN,
+        N2_IN,
+        N3_IN,
+        HAKT_IN,
+        LAMBDA_IN,
+        THETA_IN_PR,
+        BI_IN_PR,
+        BI_OUT_PR,
+        THNEW_OUT_PR,
+        INVCOV_IN_PR,
+        NCORES_IN,
+        SPMIN_IN,
+        LWGHT_LOCAL_PR,
+        WGHT_IN_PR,
+        SWJY_LOCAL_PR,
+        NP1_IN,
+        NP2_IN,
+        NP3_IN
+    );
 
     // Free allocated memory for temporary arrays used in internal calculations.
     // These arrays were created to store intermediate results and are no longer needed.
