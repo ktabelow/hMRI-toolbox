@@ -312,7 +312,7 @@ void pvaws(
 }
 
 
-void pvawsme(
+void pvawslast(
     double *y,       // 1 
     double *yd,      // 2
     double *pos,     // 3
