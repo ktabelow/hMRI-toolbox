@@ -19,7 +19,6 @@ extern void pvaws(
     double *bin,   // 12
     double *thnew, // 13
     double *invcov,// 14
-    int ncores,    // 15
     double spmin,  // 16
     double *lwght, // 17
     double *wght,  // 18
@@ -29,29 +28,6 @@ extern void pvaws(
     int np3        // 22
 );
 
-//    Gateway function pvaws
-//    for C function pvaws in pcaws.c
-//
-//     [bi, theta] = pvaws(y,         1
-//                         pos,       2
-//                         nv,        3
-//                         nvd,       4
-//                         n1,        5
-//                         n2,        6
-//                         n3,        7
-//                         hakt,      8
-//                         lambda,    9
-//                         theta,    10
-//                         bi,       11
-//                         invcov,   12
-//                         ncores,   13
-//                         spmin,    14
-//                         wght,     15
-//                         dlw,      16
-//                         np1,      17
-//                         np2,      18
-//                         np3);     19
-//
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -90,8 +66,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     // Check for proper number of arguments
 
-    if (nrhs != 19)
-        mexErrMsgTxt("pvaws requires 19 input arguments");
+    if (nrhs != 18)
+        mexErrMsgTxt("pvaws requires 18 input arguments");
     if (nlhs != 2)
         mexErrMsgTxt("pvaws requires 2 output arguments");
 
@@ -137,37 +113,33 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     THETA_IN_PR = mxGetPr(prhs[9]);
     BI_IN_PR = mxGetPr(prhs[10]);
     INVCOV_IN_PR = mxGetPr(prhs[11]);
-    if (!mxIsNumeric(prhs[12]) || mxGetNumberOfElements(prhs[12]) != 1) {
-        mexErrMsgTxt("NCORES_IN must be a scalar numeric value");
-    }
-    NCORES_IN = (mwSize)mxGetScalar(prhs[12]);
 
-    if (!mxIsNumeric(prhs[13]) || mxGetNumberOfElements(prhs[13]) != 1) {
+    if (!mxIsNumeric(prhs[12]) || mxGetNumberOfElements(prhs[12]) != 1) {
         mexErrMsgTxt("SPMIN_IN must be a scalar numeric value");
     }
-    SPMIN_IN = (mwSize)mxGetScalar(prhs[13]);
+    SPMIN_IN = (mwSize)mxGetScalar(prhs[12]);
 
-    WGHT_IN_PR = mxGetPr(prhs[14]);
+    WGHT_IN_PR = mxGetPr(prhs[13]);
 
-    if (!mxIsNumeric(prhs[15]) || mxGetNumberOfElements(prhs[15]) != 1) {
+    if (!mxIsNumeric(prhs[14]) || mxGetNumberOfElements(prhs[14]) != 1) {
         mexErrMsgTxt("DLW_IN must be a scalar numeric value");
     }
-    DLW_IN = (mwSize)mxGetScalar(prhs[15]);
+    DLW_IN = (mwSize)mxGetScalar(prhs[14]);
 
-    if (!mxIsNumeric(prhs[16]) || mxGetNumberOfElements(prhs[16]) != 1) {
+    if (!mxIsNumeric(prhs[15]) || mxGetNumberOfElements(prhs[15]) != 1) {
         mexErrMsgTxt("NP1_IN must be a scalar numeric value");
     }
-    NP1_IN = (mwSize)mxGetScalar(prhs[16]);
+    NP1_IN = (mwSize)mxGetScalar(prhs[15]);
 
-    if (!mxIsNumeric(prhs[17]) || mxGetNumberOfElements(prhs[17]) != 1) {
+    if (!mxIsNumeric(prhs[16]) || mxGetNumberOfElements(prhs[16]) != 1) {
         mexErrMsgTxt("NP2_IN must be a scalar numeric value");
     }
-    NP2_IN = (mwSize)mxGetScalar(prhs[17]);
+    NP2_IN = (mwSize)mxGetScalar(prhs[16]);
 
-    if (!mxIsNumeric(prhs[18]) || mxGetNumberOfElements(prhs[18]) != 1) {
+    if (!mxIsNumeric(prhs[17]) || mxGetNumberOfElements(prhs[17]) != 1) {
         mexErrMsgTxt("NP3_IN must be a scalar numeric value");
     }
-    NP3_IN = (mwSize)mxGetScalar(prhs[18]);
+    NP3_IN = (mwSize)mxGetScalar(prhs[17]);
 
     // create all the plhs
 
@@ -215,14 +187,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
          BI_OUT_PR,         // 12
          THNEW_OUT_PR,      // 13
          INVCOV_IN_PR,      // 14
-         (int)NCORES_IN,    // 15
-         (double)SPMIN_IN,  // 16
-         LWGHT_LOCAL_PR,    // 17
-         WGHT_IN_PR,        // 18
-         SWJY_LOCAL_PR,     // 19
-         (int)NP1_IN,       // 20
-         (int)NP2_IN,       // 21
-         (int)NP3_IN        // 22
+         (double)SPMIN_IN,  // 15
+         LWGHT_LOCAL_PR,    // 16
+         WGHT_IN_PR,        // 17
+         SWJY_LOCAL_PR,     // 18
+         (int)NP1_IN,       // 19
+         (int)NP2_IN,       // 20
+         (int)NP3_IN        // 21
      );
 
     // Free allocated memory for temporary arrays used in internal calculations.

@@ -2,7 +2,25 @@
 #include <math.h>
 #include <stdbool.h>
 
-// Kernel function translated from Fortran to C
+/**
+ * Computes the kernel weight for a given kernel type and squared distance.
+ * 
+ * This function implements various kernel functions commonly used in
+ * non-parametric density estimation and smoothing. The kernel type is
+ * specified by the `kern` parameter, and the squared distance is provided
+ * as `xsq`.
+ * 
+ * @param kern The kernel type identifier:
+ *             - 1: Triangular kernel
+ *             - 2: Epanechnikov kernel (default)
+ *             - 3: Quadratic kernel
+ *             - 4: Cubic kernel
+ *             - 5: Gaussian kernel
+ * @param xsq The squared distance from the center of the kernel.
+ * 
+ * @return The kernel weight for the given squared distance.
+ *         Returns 0.0 if `xsq >= 1.0`.
+ */
 double lkern(int kern, double xsq) {
     double z;
     
@@ -30,6 +48,25 @@ double lkern(int kern, double xsq) {
     }
 }
 
+/**
+ * Computes the Kullback-Leibler (KL) divergence between two multivariate
+ * Gaussian distributions.
+ * 
+ * This function calculates the squared Mahalanobis distance between two
+ * vectors `thi` and `thj`, weighted by the inverse covariance matrix `si2`.
+ * The KL divergence is a measure of the difference between two probability
+ * distributions and is used in the adaptive weights smoothing (AWS) to
+ * determine the similarity between voxels.
+ * 
+ * @param thi Pointer to the first vector (mean of the first Gaussian).
+ * @param thj Pointer to the second vector (mean of the second Gaussian).
+ * @param si2 Pointer to the inverse covariance matrix (stored in lower
+ *            triangular form as a vector).
+ * @param nv The number of dimensions (variables) in the vectors.
+ * 
+ * @return The squared Mahalanobis distance (KL divergence) between the
+ *         two vectors.
+ */
 double KLdistsi(double *thi, double *thj, double *si2, int nv) {
     double z = 0.0;
     double zdk;
@@ -50,6 +87,38 @@ double KLdistsi(double *thi, double *thj, double *si2, int nv) {
     return z;
 }
 
+/**
+ * Performs Patchwise Vector Adaptive Weights Smoothing (PVAWS) on voxel data.
+ * 
+ * This function implements the PVAWS algorithm, which adaptively smooths voxel
+ * data while preserving edges and boundaries between different tissue types.
+ * It uses a kernel-based smoothing approach with adaptive weights to reduce
+ * noise while maintaining structural integrity. The adaptive weighting scheme
+ * (AWS) adjusts the smoothing based on the similarity between neighboring voxels,
+ * measured using the Kullback-Leibler (KL) divergence.
+ * 
+ * @param y Pointer to the input voxel data (e.g., MRI signal intensities).
+ * @param pos Pointer to the voxel positions or indices.
+ * @param nv Number of variables (e.g., dimensions in the data).
+ * @param nvd Number of variables in the inverse covariance matrix.
+ * @param n1 Number of voxels in the first dimension (x-axis).
+ * @param n2 Number of voxels in the second dimension (y-axis).
+ * @param n3 Number of voxels in the third dimension (z-axis).
+ * @param hakt Bandwidth parameter for the kernel smoothing.
+ * @param lambda Regularization parameter for the adaptive weighting.
+ * @param theta Pointer to the initial parameter estimates for each voxel.
+ * @param bi Pointer to the initial local sum of weights for each voxel.
+ * @param bin Pointer to the output local sum of weights after smoothing.
+ * @param thnew Pointer to the output parameter estimates after smoothing.
+ * @param invcov Pointer to the inverse covariance matrices for each voxel.
+ * @param spmin Plateau of the kernel function starts here.
+ * @param lwght Pointer to the location weights for the kernel.
+ * @param wght Pointer to the voxel size ratios (w1, w2, w3).
+ * @param swjy Pointer to the intermediate weighted sums for the parameters.
+ * @param np1 Size of the patches in the first dimension.
+ * @param np2 Size of the patches in the second dimension.
+ * @param np3 Size of the patches in the third dimension.
+ */
 void pvaws(
     double *y,       // 1
     int *pos,        // 2
@@ -65,7 +134,6 @@ void pvaws(
     double *bin,     // 12
     double *thnew,   // 13
     double *invcov,  // 14
-    int ncores,      // 15 OMP not needed for pvaws, but we keep it as an argument for consistency with pvawsme     
     double spmin,    // 16
     double *lwght,   // 17
     double *wght,    // 18
