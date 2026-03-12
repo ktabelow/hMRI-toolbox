@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 
-// Forward declaration of the pvaws function from pcaws.c
+// Forward declaration of the pvaws function from aws.c
 extern void pvaws(
     double *y,     // 1
     int *pos,      // 2
