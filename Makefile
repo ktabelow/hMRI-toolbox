@@ -27,7 +27,7 @@ pvawslast: $(PVAWSLAST_SOURCES)
 	$(MEX) $(CFLAGS) $(PVAWSLAST_SOURCES) -output pvawslast
 
 clean:
-	rm -f *.mexa64 *.mexmaci64 *.mexglx *.mexw64 *.mexw32
+	rm -f *.mexa64 *.mexmaci64 *.mexmaca64 *.mexglx *.mexw64 *.mexw32
 
 # Individual targets for each function
 .PHONY: all clean gethani pvaws pvawslast
