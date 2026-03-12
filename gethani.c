@@ -3,31 +3,8 @@
 #include <stdlib.h>
 
 // Function to compute the location kernel
-static double lkern(int kern, double xsq) {
-    double z;
-    if (xsq >= 1.0) {
-        return 0.0;
-    } else if (kern == 1) {
-        if (xsq <= 0.5) {
-            return 1.0;
-        } else {
-            return 2.0 * (1.0 - xsq);
-        }
-    } else if (kern == 2) {
-        return 1.0 - xsq;
-    } else if (kern == 3) {
-        z = 1.0 - xsq;
-        return z * z;
-    } else if (kern == 4) {
-        z = 1.0 - xsq;
-        return z * z * z;
-    } else if (kern == 5) {
-        return exp(-xsq * 8.0);
-    } else {
-        // Default to Epanechnikov
-        return 1.0 - xsq;
-    }
-}
+// Forward declaration of lkern from aws.c
+extern double lkern(int kern, double xsq);
 
 // Function to compute the sum of location weights
 static double sofw(double bw, int kern, double wght[2]) {
