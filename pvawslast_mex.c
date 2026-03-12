@@ -45,13 +45,12 @@ extern void pvawslast(
 //                                              theta,  12
 //                                              bi,     13
 //                                              invcov, 14
-//                                              ncores, 15
-//                                              spmin,  16
-//                                              wght,   17
-//                                              dlw,    18
-//                                              np1,    19
-//                                              np2,    20
-//                                              np3);   21
+//                                              spmin,  15
+//                                              wght,   16
+//                                              dlw,    17
+//                                              np1,    18
+//                                              np2,    19
+//                                              np3);   20
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -64,7 +63,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       mwSize N1_IN;
       mwSize N2_IN;
       mwSize N3_IN; 
-      mwSize NCORES_IN;
       mwSize SPMIN_IN; 
       mwSize DLW_IN;
       mwSize NP1_IN;
@@ -104,8 +102,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
          mexErrMsgTxt("Output argument 1 must be a 1xNV_IN matrix.");
       if (mxGetM(plhs[1]) != NV_IN || mxGetN(plhs[1]) != NV_IN)
          mexErrMsgTxt("Output argument 2 must be a NV_INxNV_IN matrix.");
-      if (mxGetM(plhs[2]) != NV_IN || mxGetN(plhs[2]) != NCORES_IN)
-         mexErrMsgTxt("Output argument 3 must be a NV_INxNCORES_IN matrix.");
+      if (mxGetM(plhs[2]) != NV_IN || mxGetN(plhs[2]) != SPMIN_IN)
+         mexErrMsgTxt("Output argument 3 must be a NV_INxSPMIN_IN matrix.");
       if (!mxIsDouble(prhs[0]) || mxGetNumberOfDimensions(prhs[0]) != 2)
          mexErrMsgTxt("Input y must be a 2D double array.");
       if (!mxIsDouble(prhs[1]) || mxGetNumberOfDimensions(prhs[1]) != 2)
@@ -134,19 +132,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
          mexErrMsgTxt("Input bi must be a 2D double array.");
       if (!mxIsDouble(prhs[13]) || mxGetNumberOfDimensions(prhs[13]) != 2)
          mexErrMsgTxt("Input invcov must be a 2D double array.");
-      if (!mxIsDouble(prhs[14]) || mxGetNumberOfElements(prhs[14]) != 1)
-         mexErrMsgTxt("Input ncores must be a scalar.");
-      if (!mxIsDouble(prhs[15]) || mxGetNumberOfElements(prhs[15]) != 1)
+      if (!mxIsDouble(prhs[15]) || mxGetNumberOfElements(prhs[14]) != 1)
          mexErrMsgTxt("Input spmin must be a scalar.");
-      if (!mxIsDouble(prhs[16]) || mxGetNumberOfDimensions(prhs[16]) != 2)
+      if (!mxIsDouble(prhs[16]) || mxGetNumberOfDimensions(prhs[15]) != 2)
          mexErrMsgTxt("Input wght must be a 2D double array.");
-      if (!mxIsDouble(prhs[17]) || mxGetNumberOfElements(prhs[17]) != 1)
+      if (!mxIsDouble(prhs[17]) || mxGetNumberOfElements(prhs[16]) != 1)
          mexErrMsgTxt("Input dlw must be a scalar.");
-      if (!mxIsDouble(prhs[18]) || mxGetNumberOfElements(prhs[18]) != 1)
+      if (!mxIsDouble(prhs[18]) || mxGetNumberOfElements(prhs[17]) != 1)
          mexErrMsgTxt("Input np1 must be a scalar.");
-      if (!mxIsDouble(prhs[19]) || mxGetNumberOfElements(prhs[19]) != 1)
+      if (!mxIsDouble(prhs[19]) || mxGetNumberOfElements(prhs[18]) != 1)
          mexErrMsgTxt("Input np2 must be a scalar.");
-      if (!mxIsDouble(prhs[20]) || mxGetNumberOfElements(prhs[20]) != 1)
+      if (!mxIsDouble(prhs[20]) || mxGetNumberOfElements(prhs[19]) != 1)
          mexErrMsgTxt("Input np3 must be a scalar.");
       if (nlhs != 4)
          mexErrMsgTxt("pvawslast requires 4 output arguments");
@@ -168,13 +164,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       THETA_IN_PR = mxGetPr(prhs[11]);
       BI_IN_PR = mxGetPr(prhs[12]);
       INVCOV_IN_PR = mxGetPr(prhs[13]);
-      NCORES_IN = (mwSize)mxGetScalar(prhs[14]);
-      SPMIN_IN = (mwSize)mxGetScalar(prhs[15]);
-      WGHT_IN_PR = mxGetPr(prhs[16]);
-      DLW_IN = (mwSize)mxGetScalar(prhs[17]);
-      NP1_IN = (mwSize)mxGetScalar(prhs[18]);
-      NP2_IN = (mwSize)mxGetScalar(prhs[19]);
-      NP3_IN = (mwSize)mxGetScalar(prhs[20]);
+      SPMIN_IN = (mwSize)mxGetScalar(prhs[14]);
+      WGHT_IN_PR = mxGetPr(prhs[15]);
+      DLW_IN = (mwSize)mxGetScalar(prhs[16]);
+      NP1_IN = (mwSize)mxGetScalar(prhs[17]);
+      NP2_IN = (mwSize)mxGetScalar(prhs[18]);
+      NP3_IN = (mwSize)mxGetScalar(prhs[19]);
 
       // Create all the plhs (output arrays)
 
