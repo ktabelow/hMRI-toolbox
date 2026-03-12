@@ -28,6 +28,28 @@ extern void pvaws(
     int np3        // 22
 );
 
+//     Gateway function pvaws
+//     for C function pvaws in aws.c
+//     
+//      [bi, theta] = pvaws(modelCoeff,              1
+//                          position,                2
+//                          nvec,                    3
+//                          nvec * (nvec + 1) / 2,   4
+//                          n1,                      5
+//                          n2,                      6
+//                          n3,                      7
+//                          hakt,                    8
+//                          lambda0,                 9
+//                          theta,                  10
+//                          bi,                     11
+//                          invCov,                 12
+//                          spmin,                  13 
+//                          wghts,                  14
+//                          dlw,                    15
+//                          np1,                    16
+//                          np2,                    17
+//                          np3);                   18
+
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {

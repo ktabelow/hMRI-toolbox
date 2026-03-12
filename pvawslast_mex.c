@@ -3,6 +3,31 @@
 #include <math.h>
 #include <stdio.h>
 
+// Forward declaration of the pvawslast function from aws.c
+extern void pvawslast(
+    double *y,      // 1
+    double *yd,     // 2  
+    int *pos,       // 3
+    int nv,         // 4
+    int nvd,        // 5
+    int nd,         // 6
+    int n1,         // 7
+    int n2,         // 8
+    int n3,         // 9
+    double hakt,    // 10 
+    double lambda,  // 11
+    double *theta,  // 12
+    double *bi,     // 13
+    double *invcov, // 14
+    int ncores,     // 15
+    double spmin,   // 16
+    double *wght,   // 17
+    double *dlw,    // 18
+    int np1,        // 19
+    int np2,        // 20
+    int np3         // 21
+);
+
 //     Gateway function pvawslast
 //     for C function pvawsme in pcaws.c
 //     
