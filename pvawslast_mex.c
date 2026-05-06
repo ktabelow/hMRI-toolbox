@@ -5,27 +5,32 @@
 
 // Forward declaration of the pvawslast function from aws.c
 extern void pvawslast(
-    double *y,      // 1
-    double *yd,     // 2  
-    int *pos,       // 3
-    int nv,         // 4
-    int nvd,        // 5
-    int nd,         // 6
-    int n1,         // 7
-    int n2,         // 8
-    int n3,         // 9
-    double hakt,    // 10 
-    double lambda,  // 11
-    double *theta,  // 12
-    double *bi,     // 13
-    double *invcov, // 14
-    int ncores,     // 15
-    double spmin,   // 16
-    double *wght,   // 17
-    double *dlw,    // 18
-    int np1,        // 19
-    int np2,        // 20
-    int np3         // 21
+    double *y,       // 1
+    double *yd,      // 2
+    int *pos,        // 3
+    int nv,          // 4
+    int nvd,         // 5
+    int nd,          // 6
+    int n1,          // 7
+    int n2,          // 8
+    int n3,          // 9
+    double hakt,     // 10
+    double lambda,   // 11
+    double *theta,   // 12
+    double *bi,      // 13
+    double *bin,     // 14
+    double *thnew,   // 15
+    double *ydnew,   // 16
+    double *invcov,  // 17
+    int ncores,      // 18
+    double spmin,    // 19
+    double *lwght,   // 20
+    double *wght,    // 21
+    double *swjy,    // 22
+    double *swjd,    // 23
+    int np1,         // 24
+    int np2,         // 25
+    int np3          // 26
 );
 
 //     Gateway function pvawslast
@@ -63,7 +68,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       mwSize N1_IN;
       mwSize N2_IN;
       mwSize N3_IN; 
-      mwSize SPMIN_IN; 
+      double SPMIN_IN;
       mwSize DLW_IN;
       mwSize NP1_IN;
       mwSize NP2_IN;
@@ -78,7 +83,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
       double *Y_IN_PR;
       double *YD_IN_PR;
-      double *POS_IN_PR;
+      int *POS_IN_PR;
       double *THETA_IN_PR;
       double *BI_IN_PR;
       double *BI_OUT_PR;
@@ -92,24 +97,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
       // Check for proper number of arguments
 
-      if (nrhs != 21)
-         mexErrMsgTxt("pvawslast requires 21 input arguments");
-      if (nlhs != 4)
-         mexErrMsgTxt("pvawslast requires 4 output arguments");
+      if (nrhs != 20)
+         mexErrMsgTxt("pvawslast requires 20 input arguments");
+      if (nlhs != 3)
+         mexErrMsgTxt("pvawslast requires 3 output arguments");
 
-      // Validate output arguments
-      if (mxGetM(plhs[0]) != 1 || mxGetN(plhs[0]) != NV_IN)
-         mexErrMsgTxt("Output argument 1 must be a 1xNV_IN matrix.");
-      if (mxGetM(plhs[1]) != NV_IN || mxGetN(plhs[1]) != NV_IN)
-         mexErrMsgTxt("Output argument 2 must be a NV_INxNV_IN matrix.");
-      if (mxGetM(plhs[2]) != NV_IN || mxGetN(plhs[2]) != SPMIN_IN)
-         mexErrMsgTxt("Output argument 3 must be a NV_INxSPMIN_IN matrix.");
+      // Validate input arguments
       if (!mxIsDouble(prhs[0]) || mxGetNumberOfDimensions(prhs[0]) != 2)
          mexErrMsgTxt("Input y must be a 2D double array.");
       if (!mxIsDouble(prhs[1]) || mxGetNumberOfDimensions(prhs[1]) != 2)
          mexErrMsgTxt("Input yd must be a 2D double array.");
-      if (!mxIsDouble(prhs[2]) || mxGetNumberOfDimensions(prhs[2]) != 2)
-         mexErrMsgTxt("Input pos must be a 2D double array.");
+      if (!mxIsNumeric(prhs[2]))
+         mexErrMsgTxt("Input pos must be a numeric array.");
       if (!mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != 1)
          mexErrMsgTxt("Input nv must be a scalar.");
       if (!mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != 1)
@@ -132,27 +131,25 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
          mexErrMsgTxt("Input bi must be a 2D double array.");
       if (!mxIsDouble(prhs[13]) || mxGetNumberOfDimensions(prhs[13]) != 2)
          mexErrMsgTxt("Input invcov must be a 2D double array.");
-      if (!mxIsDouble(prhs[15]) || mxGetNumberOfElements(prhs[14]) != 1)
+      if (!mxIsDouble(prhs[14]) || mxGetNumberOfElements(prhs[14]) != 1)
          mexErrMsgTxt("Input spmin must be a scalar.");
-      if (!mxIsDouble(prhs[16]) || mxGetNumberOfDimensions(prhs[15]) != 2)
-         mexErrMsgTxt("Input wght must be a 2D double array.");
-      if (!mxIsDouble(prhs[17]) || mxGetNumberOfElements(prhs[16]) != 1)
+      if (!mxIsDouble(prhs[15]) || mxGetNumberOfElements(prhs[15]) != 2)
+         mexErrMsgTxt("Input wght must be a vector of length 2.");
+      if (!mxIsDouble(prhs[16]) || mxGetNumberOfElements(prhs[16]) != 1)
          mexErrMsgTxt("Input dlw must be a scalar.");
-      if (!mxIsDouble(prhs[18]) || mxGetNumberOfElements(prhs[17]) != 1)
+      if (!mxIsDouble(prhs[17]) || mxGetNumberOfElements(prhs[17]) != 1)
          mexErrMsgTxt("Input np1 must be a scalar.");
-      if (!mxIsDouble(prhs[19]) || mxGetNumberOfElements(prhs[18]) != 1)
+      if (!mxIsDouble(prhs[18]) || mxGetNumberOfElements(prhs[18]) != 1)
          mexErrMsgTxt("Input np2 must be a scalar.");
-      if (!mxIsDouble(prhs[20]) || mxGetNumberOfElements(prhs[19]) != 1)
+      if (!mxIsDouble(prhs[19]) || mxGetNumberOfElements(prhs[19]) != 1)
          mexErrMsgTxt("Input np3 must be a scalar.");
-      if (nlhs != 4)
-         mexErrMsgTxt("pvawslast requires 4 output arguments");
 
 
       // get all the prhs 
 
       Y_IN_PR = mxGetPr(prhs[0]);
       YD_IN_PR = mxGetPr(prhs[1]);
-      POS_IN_PR = mxGetPr(prhs[2]);
+      POS_IN_PR = (int*)mxGetData(prhs[2]);
       NV_IN = (mwSize)mxGetScalar(prhs[3]);
       NVD_IN = (mwSize)mxGetScalar(prhs[4]);
       ND_IN = (mwSize)mxGetScalar(prhs[5]);
@@ -164,7 +161,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       THETA_IN_PR = mxGetPr(prhs[11]);
       BI_IN_PR = mxGetPr(prhs[12]);
       INVCOV_IN_PR = mxGetPr(prhs[13]);
-      SPMIN_IN = (mwSize)mxGetScalar(prhs[14]);
+      SPMIN_IN = mxGetScalar(prhs[14]);
       WGHT_IN_PR = mxGetPr(prhs[15]);
       DLW_IN = (mwSize)mxGetScalar(prhs[16]);
       NP1_IN = (mwSize)mxGetScalar(prhs[17]);
@@ -173,9 +170,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
       // Create all the plhs (output arrays)
 
-      plhs[0] = mxCreateDoubleMatrix(1, NV_IN, mxREAL);           // Correct?
-      plhs[1] = mxCreateDoubleMatrix(NV_IN, NV_IN, mxREAL);       // Correct?
-      plhs[2] = mxCreateDoubleMatrix(NV_IN, NCORES_IN, mxREAL);   // Correct?
+      mwSize nmask = mxGetNumberOfElements(prhs[12]);
+      plhs[0] = mxCreateDoubleMatrix(1, nmask, mxREAL);
+      plhs[1] = mxCreateDoubleMatrix(NV_IN, nmask, mxREAL);
+      plhs[2] = mxCreateDoubleMatrix(ND_IN, nmask, mxREAL);
       
       BI_OUT_PR = mxGetPr(plhs[0]);
       THNEW_OUT_PR = mxGetPr(plhs[1]);
@@ -183,9 +181,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
       // create all arrays for internal calculations 
 
-      mxArray *LWGHT_LOCAL = mxCreateDoubleMatrix(1, DLW_IN, mxREAL);       // Correct?
-      mxArray *SWJY_LOCAL = mxCreateDoubleMatrix(NV_IN, NCORES_IN, mxREAL); // Correct?
-      mxArray *SWJD_LOCAL = mxCreateDoubleMatrix(NV_IN, NCORES_IN, mxREAL); // Correct?
+      mxArray *LWGHT_LOCAL = mxCreateDoubleMatrix(1, DLW_IN, mxREAL);
+      mxArray *SWJY_LOCAL = mxCreateDoubleMatrix(NV_IN, 1, mxREAL);
+      mxArray *SWJD_LOCAL = mxCreateDoubleMatrix(ND_IN, 1, mxREAL);
 
       LWGHT_LOCAL_PR = mxGetPr(LWGHT_LOCAL);
       SWJY_LOCAL_PR = mxGetPr(SWJY_LOCAL);
@@ -200,7 +198,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       // - NV_IN, NVD_IN, ND_IN, N1_IN, N2_IN, N3_IN: Scalar parameters for dimensions
       // - HAKT_IN, LAMBDA_IN: Scalar parameters for smoothing
       // - THETA_IN_PR, BI_IN_PR, INVCOV_IN_PR: Input matrices for statistical calculations
-      // - NCORES_IN, SPMIN_IN: Scalar parameters for computational settings
+      // - SPMIN_IN: Scalar parameter for the kernel plateau
       // - WGHT_IN_PR: Weight matrix
       // - NP1_IN, NP2_IN, NP3_IN: Scalar parameters for additional dimensions
       // Outputs:
@@ -225,8 +223,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 BI_OUT_PR, 
                 THNEW_OUT_PR,
                 YDNEW_OUT_PR,
-                INVCOV_IN_PR, 
-                NCORES_IN, 
+                INVCOV_IN_PR,
+                1,
                 SPMIN_IN, 
                 LWGHT_LOCAL_PR, 
                 WGHT_IN_PR, 

@@ -219,7 +219,7 @@ void pvaws(
     for (iind = 0; iind < n1 * n2 * n3; iind++) {
         iindp = pos[iind];
         if (iindp == 0) continue;
-        bi[iindp - 1] /= lambda; // CORRECT? to substract 1 from iindp to get the correct index for bi, since iindp is 1-based index from MATLAB and bi is 0-based index in C
+        bi[iindp - 1] /= lambda;
     }
 
     // main AWS loop over all voxels in the data (iind) to calculate the new estimates of theta and bi for each voxel.
@@ -262,9 +262,9 @@ void pvaws(
                     j1 = jw1 + i1;
                     if (j1 < 1 || j1 > n1) continue;
                     jind = j1 + jind2;
-                    jindp = pos[jind - 1]; // CORRECT? to substract 1 from jind to get the correct index for pos, since jind is 1-based index from MATLAB and pos is 0-based index in C
+                    jindp = pos[jind - 1];
                     if (jindp == 0) continue;
-                    wj = lwght[jw1 + clw1 + jwind2 - 1]; // CORRECT? to substract 1 from the index to get the correct index for lwght, since the minimal value of jw1 is -ih1 and the maximal value is ih1, so the index for lwght runs from 0 to dlw1*dlw2*dlw3-1
+                    wj = lwght[jw1 + clw1 + jwind2];
                     if (aws) {
                         sij = 0.0;
                         for (ip1 = i1 - nph1; ip1 <= i1 + nph1; ip1++) {
@@ -279,18 +279,18 @@ void pvaws(
                                     if (sij > 1.0) continue;
                                     if (ip3 <= 0 || ip3 > n3) continue;
                                     ipind = ip1 + (ip2 - 1) * n1 + (ip3 - 1) * n12;
-                                    ipindp = pos[ipind - 1]; // CORRECT? to substract 1 from ipind to get the correct index for pos, since ipind is 1-based index from MATLAB and pos is 0-based index in C
+                                    ipindp = pos[ipind - 1];
                                     if (ipindp == 0) continue;
                                     jp3 = ip3 + jw3;
                                     if (jp3 <= 0 || jp3 > n3) continue;
                                     jpind = jp1 + (jp2 - 1) * n1 + (jp3 - 1) * n12;
-                                    jpindp = pos[jpind - 1]; // CORRECT? to substract 1 from jpind to get the correct index for pos, since jpind is 1-based index from MATLAB and pos is 0-based index in C
+                                    jpindp = pos[jpind - 1];
                                     if (jpindp == 0) continue;
-                                    sijp = KLdistsi(&theta[(jpindp - 1) * nv], // CORRECT? to substract 1 from jpindp to get the correct index for theta, since jpindp is 1-based index from MATLAB and theta is 0-based index in C
-                                                    &theta[(ipindp - 1) * nv], // CORRECT? to substract 1 from ipindp to get the correct index for theta, since ipindp is 1-based index from MATLAB and theta is 0-based index in C
-                                                    &invcov[(ipindp - 1) * nvd], // CORRECT? to substract 1 from ipindp to get the correct index for invcov, since ipindp is 1-based index from MATLAB and invcov is 0-based index in C
+                                    sijp = KLdistsi(&theta[(jpindp - 1) * nv],
+                                                    &theta[(ipindp - 1) * nv],
+                                                    &invcov[(ipindp - 1) * nvd],
                                                     nv);
-                                    sij = fmax(sij, bi[ipindp - 1] * sijp); // CORRECT? to substract 1 from ipindp to get the correct index for bi, since ipindp is 1-based index from MATLAB and bi is 0-based index in C
+                                    sij = fmax(sij, bi[ipindp - 1] * sijp);
                                 }
                             }
                         }
@@ -305,17 +305,17 @@ void pvaws(
             }
         }
         for (k = 0; k < nv; k++) {
-            thnew[k + iindp - 1] = swjy[k] / swj; // CORRECT? to substract 1 from iindp to get the correct index for thnew, since iindp is 1-based index from MATLAB and thnew is 0-based index in C
+            thnew[(iindp - 1) * nv + k] = swjy[k] / swj;
         }
-        bin[iindp - 1] = swj; // CORRECT? to substract 1 from iindp to get the correct index for bin, since iindp is 1-based index from MATLAB and bin is 0-based index in C
+        bin[iindp - 1] = swj;
     }
 }
 
 
 void pvawslast(
-    double *y,       // 1 
+    double *y,       // 1
     double *yd,      // 2
-    double *pos,     // 3
+    int *pos,        // 3
     int nv,          // 4
     int nvd,         // 5
     int nd,          // 6
@@ -441,7 +441,7 @@ void pvawslast(
             jind3 = (j3 - 1) * n12;
             z3 = jw3 * w2;
             z3 = z3 * z3;
-            if (n2 > 1) ih2 = floor(sqrt(hakt2 - z3) / w1);
+            if (n2 > 1) ih2 = (int)floor(sqrt(hakt2 - z3) / w1);
             for (jw2 = -ih2; jw2 <= ih2; jw2++) {
                 j2 = jw2 + i2;
                 if (j2 < 1 || j2 > n2) continue;
@@ -449,14 +449,14 @@ void pvawslast(
                 jind2 = (j2 - 1) * n1 + jind3;
                 z2 = jw2 * w1;
                 z2 = z3 + z2 * z2;
-                ih1 = floor(sqrt(hakt2 - z2));
+                ih1 = (int)floor(sqrt(hakt2 - z2));
                 for (jw1 = -ih1; jw1 <= ih1; jw1++) {
                     j1 = jw1 + i1;
                     if (j1 < 1 || j1 > n1) continue;
                     jind = j1 + jind2;
-                    jindp = pos[jind - 1]; // CORRECT? to substract 1 from jind to get the correct index for pos, since jind is 1-based index from MATLAB and pos is 0-based index in C
+                    jindp = pos[jind - 1];
                     if (jindp == 0) continue;
-                    wj = lwght[jw1 + clw1 + jwind2]; // CORRECT? to substract 1 from the index to get the correct index for lwght, since the minimal value of jw1 is -ih1 and the maximal value is ih1, so the index for lwght runs from 0 to dlw1*dlw2*dlw3-1
+                    wj = lwght[jw1 + clw1 + jwind2];
                     if (aws) {
                         sij = 0.0;
                         for (ip1 = i1 - nph1; ip1 <= i1 + nph1; ip1++) {
@@ -471,18 +471,18 @@ void pvawslast(
                                     if (sij > 1.0) continue;
                                     if (ip3 <= 0 || ip3 > n3) continue;
                                     ipind = ip1 + (ip2 - 1) * n1 + (ip3 - 1) * n12;
-                                    ipindp = pos[ipind - 1]; // CORRECT? to substract 1 from ipind to get the correct index for pos, since ipind is 1-based index from MATLAB and pos is 0-based index in C
+                                    ipindp = pos[ipind - 1];
                                     if (ipindp == 0) continue;
                                     jp3 = ip3 + jw3;
                                     if (jp3 <= 0 || jp3 > n3) continue;
                                     jpind = jp1 + (jp2 - 1) * n1 + (jp3 - 1) * n12;
-                                    jpindp = pos[jpind - 1]; // CORRECT? to substract 1 from jpind to get the correct index for pos, since jpind is 1-based index from MATLAB and pos is 0-based index in C
+                                    jpindp = pos[jpind - 1];
                                     if (jpindp == 0) continue;
-                                    sijp = KLdistsi(&theta[(jpindp - 1) * nv], // CORRECT? to substract 1 from jpindp to get the correct index for theta, since jpindp is 1-based index from MATLAB and theta is 0-based index in C
-                                                    &theta[(ipindp - 1) * nv], // CORRECT? to substract 1 from ipindp to get the correct index for theta, since ipindp is 1-based index from MATLAB and theta is 0-based index in C
-                                                    &invcov[(ipindp - 1) * nvd], // CORRECT? to substract 1 from ipindp to get the correct index for invcov, since ipindp is 1-based index from MATLAB and invcov is 0-based index in C
+                                    sijp = KLdistsi(&theta[(jpindp - 1) * nv],
+                                                    &theta[(ipindp - 1) * nv],
+                                                    &invcov[(ipindp - 1) * nvd],
                                                     nv);
-                                    sij = fmax(sij, bi[ipindp - 1] * sijp); // CORRECT? to substract 1 from ipindp to get the correct index for bi, since ipindp is 1-based index from MATLAB and bi is 0-based index in C
+                                    sij = fmax(sij, bi[ipindp - 1] * sijp);
                                 }
                             }
                         }
@@ -494,18 +494,18 @@ void pvawslast(
                         swjy[k] += wj * y[(jindp - 1) * nv + k];
                     }
                     for (k = 0; k < nd; k++) {
-                        swjd[k] += wj * yd[(jindp - 1) * nv + k];
+                        swjd[k] += wj * yd[(jindp - 1) * nd + k];
                     }
                 }
             }
         }
         for (k = 0; k < nv; k++) {
-            thnew[k + iindp - 1] = swjy[k] / swj; // CORRECT? to substract 1 from iindp to get the correct index for thnew, since iindp is 1-based index from MATLAB and thnew is 0-based index in C
+            thnew[(iindp - 1) * nv + k] = swjy[k] / swj;
         }
         for (k = 0; k < nd; k++) {
-            ydnew[k + iindp - 1] = swjd[k] / swj; // CORRECT? to substract 1 from iindp to get the correct index for ydnew, since iindp is 1-based index from MATLAB and ydnew is 0-based index in C
+            ydnew[(iindp - 1) * nd + k] = swjd[k] / swj;
         }
-        bin[iindp - 1] = swj; // CORRECT? to substract 1 from iindp to get the correct index for bin, since iindp is 1-based index from MATLAB and bin is 0-based index in C
+        bin[iindp - 1] = swj;
     }
 }
 

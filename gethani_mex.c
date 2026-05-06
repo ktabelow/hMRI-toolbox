@@ -1,6 +1,8 @@
 #include "mex.h"
 #include <math.h>
 
+extern void cgethani(double x, double y, int kern, double value, double wght[2], double eps, double *bw);
+
 // Gateway function gethani 
 //  for function cgethani in gethani.c
 //  to be called:

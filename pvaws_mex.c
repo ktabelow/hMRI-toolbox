@@ -61,8 +61,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     mwSize N1_IN;
     mwSize N2_IN;
     mwSize N3_IN;
-    mwSize NCORES_IN;
-    mwSize SPMIN_IN;
+    double SPMIN_IN;
     mwSize DLW_IN;
     mwSize NP1_IN;
     mwSize NP2_IN;
@@ -95,16 +94,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     // get all the prhs
 
-    // Get input data pointers with dimension validation
     Y_IN_PR = mxGetPr(prhs[0]);
-    if (mxGetNumberOfElements(prhs[0]) < N1_IN * N2_IN * N3_IN) {
-        mexErrMsgTxt("Y input array size does not match expected dimensions");
-    }
-
     POS_IN_PR = (int*)mxGetData(prhs[1]);
-    if (mxGetNumberOfElements(prhs[1]) < N1_IN * N2_IN * N3_IN) {
-        mexErrMsgTxt("POS input array size does not match expected dimensions (should be at least N1*N2*N3)");
-    }
     // Get scalar parameters with type checking
     if (!mxIsNumeric(prhs[2]) || mxGetNumberOfElements(prhs[2]) != 1) {
         mexErrMsgTxt("NV_IN must be a scalar numeric value");
@@ -139,7 +130,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     if (!mxIsNumeric(prhs[12]) || mxGetNumberOfElements(prhs[12]) != 1) {
         mexErrMsgTxt("SPMIN_IN must be a scalar numeric value");
     }
-    SPMIN_IN = (mwSize)mxGetScalar(prhs[12]);
+    SPMIN_IN = mxGetScalar(prhs[12]);
 
     WGHT_IN_PR = mxGetPr(prhs[13]);
 
@@ -165,10 +156,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     // create all the plhs
 
-    mwSize dims0[4] = {1, 1, 1, NV_IN};
-    plhs[0] = mxCreateNumericArray(4, dims0, mxDOUBLE_CLASS, mxREAL);  // Changed to mxDOUBLE_CLASS for consistency
-    mwSize dims1[3] = {1, 1, NV_IN};
-    plhs[1] = mxCreateNumericArray(3, dims1, mxDOUBLE_CLASS, mxREAL);  // Changed to mxDOUBLE_CLASS for consistency
+    mwSize nmask = mxGetNumberOfElements(prhs[10]);
+    plhs[0] = mxCreateDoubleMatrix(1, nmask, mxREAL);
+    plhs[1] = mxCreateDoubleMatrix(NV_IN, nmask, mxREAL);
 
     if (plhs[0] == NULL || plhs[1] == NULL) {
         mexErrMsgTxt("Memory allocation failed for output arrays");
@@ -180,7 +170,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // create all arrays for internal calculations
 
     mxArray *LWGHT_LOCAL = mxCreateDoubleMatrix(1, DLW_IN, mxREAL);
-    mxArray *SWJY_LOCAL = mxCreateDoubleMatrix(NV_IN, NCORES_IN, mxREAL);
+    mxArray *SWJY_LOCAL = mxCreateDoubleMatrix(NV_IN, 1, mxREAL);
 
     if (LWGHT_LOCAL == NULL || SWJY_LOCAL == NULL) {
         mxDestroyArray(LWGHT_LOCAL);
@@ -209,7 +199,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
          BI_OUT_PR,         // 12
          THNEW_OUT_PR,      // 13
          INVCOV_IN_PR,      // 14
-         (double)SPMIN_IN,  // 15
+         SPMIN_IN,          // 15
          LWGHT_LOCAL_PR,    // 16
          WGHT_IN_PR,        // 17
          SWJY_LOCAL_PR,     // 18
