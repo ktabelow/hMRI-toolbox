@@ -10,7 +10,7 @@ MEX = mex
 CFLAGS = -O -largeArrayDims
 
 # Source files
-GETHANI_SOURCES = gethani_mex.c gethani.c
+GETHANI_SOURCES = gethani_mex.c gethani.c aws.c
 PVAWS_SOURCES = pvaws_mex.c aws.c  
 PVAWSLAST_SOURCES = pvawslast_mex.c aws.c
 
