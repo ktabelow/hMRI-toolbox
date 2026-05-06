@@ -215,13 +215,6 @@ void pvaws(
         }
     }
 
-    // Rescale bi with 1/lambda
-    for (iind = 0; iind < n1 * n2 * n3; iind++) {
-        iindp = pos[iind];
-        if (iindp == 0) continue;
-        bi[iindp - 1] /= lambda;
-    }
-
     // main AWS loop over all voxels in the data (iind) to calculate the new estimates of theta and bi for each voxel.
     for (iind = 0; iind < n1 * n2 * n3; iind++) {
         iindp = pos[iind];
@@ -290,7 +283,7 @@ void pvaws(
                                                     &theta[(ipindp - 1) * nv],
                                                     &invcov[(ipindp - 1) * nvd],
                                                     nv);
-                                    sij = fmax(sij, bi[ipindp - 1] * sijp);
+                                    sij = fmax(sij, bi[ipindp - 1] / lambda * sijp);
                                 }
                             }
                         }
@@ -402,13 +395,6 @@ void pvawslast(
         }
     }
 
-    // Rescale bi with 1/lambda
-    for (iind = 0; iind < n1 * n2 * n3; iind++) {
-        iindp = pos[iind];
-        if (iindp == 0) continue;
-        bi[iindp - 1] /= lambda;
-    }
-
     // Call to rchkusr() - assuming it's a placeholder for some user-defined function
     // rchkusr();
 
@@ -482,7 +468,7 @@ void pvawslast(
                                                     &theta[(ipindp - 1) * nv],
                                                     &invcov[(ipindp - 1) * nvd],
                                                     nv);
-                                    sij = fmax(sij, bi[ipindp - 1] * sijp);
+                                    sij = fmax(sij, bi[ipindp - 1] / lambda * sijp);
                                 }
                             }
                         }
