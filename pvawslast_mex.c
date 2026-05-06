@@ -97,8 +97,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
       // Check for proper number of arguments
 
-      if (nrhs != 20)
-         mexErrMsgTxt("pvawslast requires 20 input arguments");
+      if (nrhs != 21)
+         mexErrMsgTxt("pvawslast requires 21 input arguments");
       if (nlhs != 3)
          mexErrMsgTxt("pvawslast requires 3 output arguments");
 
@@ -107,8 +107,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
          mexErrMsgTxt("Input y must be a 2D double array.");
       if (!mxIsDouble(prhs[1]) || mxGetNumberOfDimensions(prhs[1]) != 2)
          mexErrMsgTxt("Input yd must be a 2D double array.");
-      if (!mxIsNumeric(prhs[2]))
-         mexErrMsgTxt("Input pos must be a numeric array.");
+      if (!mxIsInt32(prhs[2]))
+         mexErrMsgTxt("Input pos must be an int32 array.");
       if (!mxIsDouble(prhs[3]) || mxGetNumberOfElements(prhs[3]) != 1)
          mexErrMsgTxt("Input nv must be a scalar.");
       if (!mxIsDouble(prhs[4]) || mxGetNumberOfElements(prhs[4]) != 1)
@@ -131,17 +131,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
          mexErrMsgTxt("Input bi must be a 2D double array.");
       if (!mxIsDouble(prhs[13]) || mxGetNumberOfDimensions(prhs[13]) != 2)
          mexErrMsgTxt("Input invcov must be a 2D double array.");
-      if (!mxIsDouble(prhs[14]) || mxGetNumberOfElements(prhs[14]) != 1)
+      // prhs[14] = mc.cores (ncores) — ignored, C code runs single-threaded
+      if (!mxIsDouble(prhs[15]) || mxGetNumberOfElements(prhs[15]) != 1)
          mexErrMsgTxt("Input spmin must be a scalar.");
-      if (!mxIsDouble(prhs[15]) || mxGetNumberOfElements(prhs[15]) != 2)
+      if (!mxIsDouble(prhs[16]) || mxGetNumberOfElements(prhs[16]) != 2)
          mexErrMsgTxt("Input wght must be a vector of length 2.");
-      if (!mxIsDouble(prhs[16]) || mxGetNumberOfElements(prhs[16]) != 1)
-         mexErrMsgTxt("Input dlw must be a scalar.");
       if (!mxIsDouble(prhs[17]) || mxGetNumberOfElements(prhs[17]) != 1)
-         mexErrMsgTxt("Input np1 must be a scalar.");
+         mexErrMsgTxt("Input dlw must be a scalar.");
       if (!mxIsDouble(prhs[18]) || mxGetNumberOfElements(prhs[18]) != 1)
-         mexErrMsgTxt("Input np2 must be a scalar.");
+         mexErrMsgTxt("Input np1 must be a scalar.");
       if (!mxIsDouble(prhs[19]) || mxGetNumberOfElements(prhs[19]) != 1)
+         mexErrMsgTxt("Input np2 must be a scalar.");
+      if (!mxIsDouble(prhs[20]) || mxGetNumberOfElements(prhs[20]) != 1)
          mexErrMsgTxt("Input np3 must be a scalar.");
 
 
@@ -161,12 +162,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       THETA_IN_PR = mxGetPr(prhs[11]);
       BI_IN_PR = mxGetPr(prhs[12]);
       INVCOV_IN_PR = mxGetPr(prhs[13]);
-      SPMIN_IN = mxGetScalar(prhs[14]);
-      WGHT_IN_PR = mxGetPr(prhs[15]);
-      DLW_IN = (mwSize)mxGetScalar(prhs[16]);
-      NP1_IN = (mwSize)mxGetScalar(prhs[17]);
-      NP2_IN = (mwSize)mxGetScalar(prhs[18]);
-      NP3_IN = (mwSize)mxGetScalar(prhs[19]);
+      // prhs[14] = mc.cores (ncores) — ignored, C code runs single-threaded
+      SPMIN_IN = mxGetScalar(prhs[15]);
+      WGHT_IN_PR = mxGetPr(prhs[16]);
+      DLW_IN = (mwSize)mxGetScalar(prhs[17]);
+      NP1_IN = (mwSize)mxGetScalar(prhs[18]);
+      NP2_IN = (mwSize)mxGetScalar(prhs[19]);
+      NP3_IN = (mwSize)mxGetScalar(prhs[20]);
 
       // Create all the plhs (output arrays)
 

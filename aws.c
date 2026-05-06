@@ -227,7 +227,7 @@ void pvaws(
         iindp = pos[iind];
         if (iindp == 0) continue;
 
-        // This is the conversion from the linear index iind 
+        // This is the conversion from the linear index iind
         // to the 3D indices i1, i2, i3 for the voxel location.
         // The linear index iind runs from 0 to n1*n2*n3-1.
         // The 3D indices i1, i2, i3 run from 1 to n1, 1 to n2, and 1 to n3, respectively.
@@ -416,7 +416,7 @@ void pvawslast(
         iindp = pos[iind];
         if (iindp == 0) continue;
 
-        // This is the conversion from the linear index iind 
+        // This is the conversion from the linear index iind
         // to the 3D indices i1, i2, i3 for the voxel location.
         // The linear index iind runs from 0 to n1*n2*n3-1.
         // The 3D indices i1, i2, i3 run from 1 to n1, 1 to n2, and 1 to n3, respectively.

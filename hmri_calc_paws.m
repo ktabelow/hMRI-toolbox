@@ -15,8 +15,8 @@ function [smoothedmpmData] = hmri_calc_paws(modelCoeff, mpmData, invCov, mask, n
     
   % create an array with the spatial dimensions of the data
   % and numbers 1, 2, 3, ... for all voxels within the mask in this order
-  position = zeros(n1, n2, n3); 
-  position(mask > 0) = 1:nnz(mask);
+  position = zeros(n1, n2, n3, 'int32');
+  position(mask > 0) = int32(1:nnz(mask));
 
   % create arrays for the sum of adaptation weights (bi) and for the data used to determine them (theta), used by FORTRAN subroutine
   bi = ones(nvoxel);

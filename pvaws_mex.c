@@ -87,8 +87,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     // Check for proper number of arguments
 
-    if (nrhs != 18)
-        mexErrMsgTxt("pvaws requires 18 input arguments");
+    if (nrhs != 19)
+        mexErrMsgTxt("pvaws requires 19 input arguments");
     if (nlhs != 2)
         mexErrMsgTxt("pvaws requires 2 output arguments");
 
@@ -127,32 +127,34 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     BI_IN_PR = mxGetPr(prhs[10]);
     INVCOV_IN_PR = mxGetPr(prhs[11]);
 
-    if (!mxIsNumeric(prhs[12]) || mxGetNumberOfElements(prhs[12]) != 1) {
+    // prhs[12] = mc.cores (ncores) — ignored, C code runs single-threaded
+
+    if (!mxIsNumeric(prhs[13]) || mxGetNumberOfElements(prhs[13]) != 1) {
         mexErrMsgTxt("SPMIN_IN must be a scalar numeric value");
     }
-    SPMIN_IN = mxGetScalar(prhs[12]);
+    SPMIN_IN = mxGetScalar(prhs[13]);
 
-    WGHT_IN_PR = mxGetPr(prhs[13]);
-
-    if (!mxIsNumeric(prhs[14]) || mxGetNumberOfElements(prhs[14]) != 1) {
-        mexErrMsgTxt("DLW_IN must be a scalar numeric value");
-    }
-    DLW_IN = (mwSize)mxGetScalar(prhs[14]);
+    WGHT_IN_PR = mxGetPr(prhs[14]);
 
     if (!mxIsNumeric(prhs[15]) || mxGetNumberOfElements(prhs[15]) != 1) {
-        mexErrMsgTxt("NP1_IN must be a scalar numeric value");
+        mexErrMsgTxt("DLW_IN must be a scalar numeric value");
     }
-    NP1_IN = (mwSize)mxGetScalar(prhs[15]);
+    DLW_IN = (mwSize)mxGetScalar(prhs[15]);
 
     if (!mxIsNumeric(prhs[16]) || mxGetNumberOfElements(prhs[16]) != 1) {
-        mexErrMsgTxt("NP2_IN must be a scalar numeric value");
+        mexErrMsgTxt("NP1_IN must be a scalar numeric value");
     }
-    NP2_IN = (mwSize)mxGetScalar(prhs[16]);
+    NP1_IN = (mwSize)mxGetScalar(prhs[16]);
 
     if (!mxIsNumeric(prhs[17]) || mxGetNumberOfElements(prhs[17]) != 1) {
+        mexErrMsgTxt("NP2_IN must be a scalar numeric value");
+    }
+    NP2_IN = (mwSize)mxGetScalar(prhs[17]);
+
+    if (!mxIsNumeric(prhs[18]) || mxGetNumberOfElements(prhs[18]) != 1) {
         mexErrMsgTxt("NP3_IN must be a scalar numeric value");
     }
-    NP3_IN = (mwSize)mxGetScalar(prhs[17]);
+    NP3_IN = (mwSize)mxGetScalar(prhs[18]);
 
     // create all the plhs
 
