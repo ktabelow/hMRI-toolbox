@@ -36,14 +36,14 @@ function [denoised_weighted_data] = hmri_paws(weighted_data, params)
   res_var = 0;
   num_echo=0;
   for ccon =1:numconn
-      for te = data[ccon].TE
-          res_var = res_var + (data[cccon].te -  extrapolated{ccon}.*exp(-R2s*te))^2;
+      for te = data{ccon}.TE
+          res_var = res_var + (data{ccon}.te - extrapolated{ccon} .* exp(-R2s * te)).^2;
       end
-      num_echo = num_echo + length(data[ccon].TE);
+      num_echo = num_echo + length(data{ccon}.TE);
   end
   res_var = res_var / (num_echo - numconn + 1);
   variance = ones([4 , 4, size(R2s)]);
-  model_var = inv(D'D);
+  model_var = inv(D' * D);
   for i =1:(numconn + 1)
       for j= 1:(numconn +1)
           variance(i, j, :, :,:) = res_var * model_var(i, j);
@@ -73,18 +73,15 @@ function [denoised_weighted_data] = hmri_paws(weighted_data, params)
   % we might skip this part because we use the linear model
   % if we use it this should to hmri_paws
   if mscbw > 0
-    rsdx <- extract(mpmESTATICSModel,"rsigma")^2
-    rsdhat <- medianFilter3D(rsdx,mscbw,mask)
-    rsdhat[!mask] <- mean(rsdhat[mask])
-    invCov <- sweep(invCov,3:5,rsdx/rsdhat,"*")
+    rsdx   = rsigma .^ 2;                          % residual variance per voxel
+    rsdhat = medianFilter3D(rsdx, mscbw, mask);     % spatially smoothed version
+    rsdhat(~mask) = mean(rsdhat(mask));
+    invCov = invCov .* (rsdx ./ rsdhat);            % rescale inv covariance
   end
-  dim(invCov) <- c(nv, nv, prod(sdim))
+  invCov = reshape(invCov, nv * nv, prod(size(mask)));
 
-  % projecting out the voxel within the mask only to save memory
-  % mask is TRUE/FALSE
-  invCov_d = invConv()
-  % Baris mask the R2s directly in hmri_paws.
-  invCov <- invCov[,,mask]
+  % keep only voxels within mask
+  invCov = invCov(:, mask(:));
 
   
   % we expect modelCoeff to be a nv x nvoxel_within_mask 
@@ -99,12 +96,12 @@ function [denoised_weighted_data] = hmri_paws(weighted_data, params)
     case 2
       indcov = [1 2 4];
     case 3
-      indcov = [1 2 6 3 7 11 4 8 12 16];
+      indcov = [1 2 5 3 6 9];
     case 4
-      indcov = [1 2 7 3 8 13 4 9 14 19 5 10 15 20 25];
+      indcov = [1 2 6 3 7 11 4 8 12 16];
   end
-  dim(invcov) = c(nvec * nvec, nvoxel)
-  invcov = invcov(indcov, :);
+  invCov = reshape(invCov, nvec * nvec, nnz(mask));
+  invCov = invCov(indcov, :);
   % end of " this has to de done in ..."
 
   % CONSISTENCY CHECKS (TBD somewhere) TO CHECK
@@ -114,7 +111,7 @@ function [denoised_weighted_data] = hmri_paws(weighted_data, params)
   % mpmData = mpmData[, mask];
 
   % add ladjust = 1 to the list of defaults
-  hmri_calc_paws(modelCoeff, dataToFit, invCov, mask,  necho = num_echo, nvec = numconn + 1, wghts, kstar = 16, patchsize = 1, ladjust)
+  smoothedmpmData = hmri_calc_paws(modelCoeff, dataToFit, invCov, mask, num_echo, numconn + 1, wghts, kstar, patchsize, ladjust);
 
   %take out denoised_weighted_data
   outputArg1 = inputArg1;

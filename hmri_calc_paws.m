@@ -1,87 +1,86 @@
 function [smoothedmpmData] = hmri_calc_paws(modelCoeff, mpmData, invCov, mask, nechos, nvec, wghts, kstar, patchsize, ladjust)
-  
-  % DEFINE ALL CONSTANTS
-  spmin = 0.25; % the statistical kernel function is a plateau to spmin with linear decrease till 1
-  lambda0 = 1e32; % the first iteration step uses this adaptation parameter lambda0 in order to create a stable non-adaptive first estimate
-  mc.cores = 1; % number of cores for OMP parallel 
-  corr_fac_patchsize = [1, 2.77, 3.46]; % adjustment factor for adaptation bandwidth for different patchsizes (1, 2, 3), determined using simulated data
+  % modelCoeff : nvec x nmask double matrix of model parameters (mask-restricted)
+  % mpmData    : nechos x nmask double matrix of raw echo data (mask-restricted)
+  % invCov     : nvec*(nvec+1)/2 x nmask double matrix, lower-triangular inverse covariance (mask-restricted)
+  % mask       : n1 x n2 x n3 logical array
+  % nechos     : total number of echoes across all contrasts
+  % nvec       : number of model parameters
+  % wghts      : 3-element voxel-size ratio vector [wx, wy, wz], or [] for isotropic
+  % kstar      : number of smoothing iterations
+  % patchsize  : patch radius (0, 1, or 2)
+  % ladjust    : adaptation bandwidth adjustment factor (default 1)
 
-  % EXTRACT ALL REQUIRED VALUES FROM INPUT
-  [n1, n2, n3] = size(modelCoeff.R2s); % this is the spatial dimension of the data
-  nvoxel = n1 * n2 * n3; % this is the total number of voxel
-  [np1, np2, np3] = deal(2 * patchsize + 1); % spatial dimension of the patches
-  hmax = 1.25 ^ (kstar / 3); % maximum spatial bandwidth corresponding to the number of iteration steps kstar in 3D
-  lambda = ladjust * 2 * nvec * qf(nvec, nechos - nvec) * corr_fac_patchsize(patchsize); % determine the adaptation bandwidth lambda
-    
-  % create an array with the spatial dimensions of the data
-  % and numbers 1, 2, 3, ... for all voxels within the mask in this order
+  % CONSTANTS
+  spmin  = 0.25;
+  lambda0 = 1e32;
+  corr_fac_patchsize = [1, 2.77, 3.46];
+
+  % wghts: default to isotropic, then convert 3-element [wx,wy,wz] to
+  % 2-element ratio vector [wx/wy, wx/wz] as expected by the C functions
+  if isempty(wghts)
+    wghts = [1, 1, 1];
+  end
+  wghts = wghts(1) ./ wghts(2:3);
+
+  % SPATIAL DIMENSIONS from mask
+  [n1, n2, n3] = size(mask);
+
+  % patch size in each dimension (1 when that dimension is flat)
+  np1 = 2 * patchsize + 1;
+  if n2 > 1, np2 = 2 * patchsize + 1; else np2 = 1; end
+  if n3 > 1, np3 = 2 * patchsize + 1; else np3 = 1; end
+
+  hmax   = 1.25 ^ (kstar / 3);
+  lambda = ladjust * 2 * nvec * qf(nvec, nechos - nvec) * corr_fac_patchsize(patchsize + 1);
+
+  % position array: 0 outside mask, 1..nmask inside mask (int32 for MEX)
   position = zeros(n1, n2, n3, 'int32');
   position(mask > 0) = int32(1:nnz(mask));
 
-  % create arrays for the sum of adaptation weights (bi) and for the data used to determine them (theta), used by FORTRAN subroutine
-  bi = ones(nvoxel);
+  % initialise adaptation weights and current estimate
+  bi    = ones(1, nnz(mask));
   theta = modelCoeff;
 
-  % do the smoothing iteration
+  % SMOOTHING ITERATION
   k = 1;
   while k <= kstar
 
-    hakt = gethani(1, 1.25 * hmax, 2, 1.25 ^ k, wghts, 1e-4); % This function requires FORTRAN code, take from qMRI package!
-    dlw = 2 * floor(hakt ./ [1, wghts]) + 1;
+    hakt = gethani(1, 1.25 * hmax, 2, 1.25 ^ k, wghts, 1e-4);
+    dlw  = 2 * floor(hakt ./ [1, wghts]) + 1;
 
-    if k == kstar % use this for the last iteration step
+    if k == kstar
 
-      [bi, theta, smoothedmpmData] = pvawslast(modelCoeff,  % CALL pvawsme
-                                               mpmData,
-                                               position,
-                                               nvec,
-                                               nvec * (nvec + 1) / 2,
-                                               nechos,
-                                               n1,
-                                               n2,
-                                               n3,
-                                               hakt,
-                                               lambda0,
-                                               theta,
-                                               bi,
-                                               invCov,
-                                               mc.cores,
-                                               spmin,
-                                               wghts,
-                                               dlw,
-                                               np1,
-                                               np2,
-                                               np3);
+      [bi, theta, smoothedmpmData] = pvawslast(modelCoeff, ...
+                                               mpmData, ...
+                                               position, ...
+                                               nvec, ...
+                                               nvec * (nvec + 1) / 2, ...
+                                               nechos, ...
+                                               n1, n2, n3, ...
+                                               hakt, lambda0, ...
+                                               theta, bi, invCov, ...
+                                               1, ...
+                                               spmin, wghts, dlw, ...
+                                               np1, np2, np3);
 
-    else % use this for all but the last iteration step
+    else
 
-      [bi, theta] = pvaws(modelCoeff, % CALL pvaws2 
-                          position,
-                          nvec,
-                          nvec * (nvec + 1) / 2,
-                          n1,
-                          n2,
-                          n3,
-                          hakt,
-                          lambda0,
-                          theta,
-                          bi,
-                          invCov,
-                          mc.cores,
-                          spmin,
-                          wghts,
-                          dlw,
-                          np1,
-                          np2,
-                          np3);
+      [bi, theta] = pvaws(modelCoeff, ...
+                          position, ...
+                          nvec, ...
+                          nvec * (nvec + 1) / 2, ...
+                          n1, n2, n3, ...
+                          hakt, lambda0, ...
+                          theta, bi, invCov, ...
+                          1, ...
+                          spmin, wghts, dlw, ...
+                          np1, np2, np3);
 
     end
-  
-    lambda0 = lambda; % use the determined adaptation bandwidth after the first step
-    k = k + 1; % next iteration step
-  end
 
-  % return smoothedmpmData (the smoothed MPM data) calculated in last iteration step
+    lambda0 = lambda;
+    k = k + 1;
+  end
 
 end
 
@@ -109,4 +108,3 @@ quantile(4,:)= [899.583310  39.248418  15.100979   9.604530   7.387886   6.22716
 3.155728   3.145301   3.135445   3.126114];
 qval = quantile(df1,df2);
 end
-
