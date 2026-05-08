@@ -20,6 +20,7 @@ function [denoised_weighted_data] = hmri_paws(weighted_data, params)
   ladjust    = params.ladjust;
   mask       = logical(params.mask{1});
   wghts      = params.voxel_size;
+  if isfield(params, 'alpha'), alpha = params.alpha; else, alpha = 0.025; end
   fit_method = 'OLS';
   mscbw      = 5;   % bandwidth for median smoothing of residual variance
                     % (mirrors mscbw in smoothESTATICS; set 0 to disable)
@@ -123,7 +124,7 @@ function [denoised_weighted_data] = hmri_paws(weighted_data, params)
 
   % PAWS smoothing — mirrors vpawscov2 call in smoothESTATICS.
   smoothedmpmData = hmri_calc_paws(modelCoeff, mpmData, invCov, mask, ...
-                                   nechos, nvec, wghts, kstar, patchsize, ladjust);
+                                   nechos, nvec, wghts, kstar, patchsize, ladjust, alpha);
 
   % ── Reconstruct denoised weighted_data ────────────────────────────────────
   denoised_weighted_data = weighted_data;
