@@ -991,11 +991,11 @@ end
               Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
                   'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
           catch
-              hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', mppcaflags_nopopup);  
+              hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', pawsflags_nopopup);  
 
           end
       else
-          hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', mppcaflags_nopopup);  
+          hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', pawsflags_nopopup);  
       end
 
       % set all the metadata
@@ -1045,11 +1045,11 @@ end
               Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
                   'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
           catch
-              hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', mppcaflags_nopopup);  
+              hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', pawsflags_nopopup);  
 
           end
       else
-          hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', mppcaflags_nopopup);  
+          hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', pawsflags_nopopup);  
       end
 
       % set all the metadata
@@ -1098,11 +1098,11 @@ end
               Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
                   'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
           catch
-              hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', mppcaflags_nopopup);  
+              hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', pawsflags_nopopup);  
 
           end
       else
-          hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', mppcaflags_nopopup);  
+          hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', pawsflags_nopopup);  
       end
 
       % set all the metadata
